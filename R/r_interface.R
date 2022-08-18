@@ -28,12 +28,12 @@
 #' grna_group = mm_odm |> get_modality("grna_expression") |> get_feature_covariates() |> dplyr::pull(target) |> unique())
 #' gene_grna_group_pairs <- gene_grna_group_pairs |> dplyr::filter(grna_group != "non-targeting")
 #' form <- "~ log(gene_n_nonzero) + log(gene_n_umis) + batch"
-#' threshold <- 8; B <- 5000; gene_modality_name <- "gene"; grna_modality_name <- "grna_assignment"; grna_group_column_name <- "target"; n_pairs_to_sample <- 50; full_output <- FALSE; side <- "both"
+#' threshold <- 8; B <- 2500; gene_modality_name <- "gene"; grna_modality_name <- "grna_assignment"; grna_group_column_name <- "target"; n_pairs_to_sample <- 50; full_output <- FALSE; side <- "both"
 #' }
 run_sceptre_low_moi <- function(mm_odm,
                                 gene_grna_group_pairs,
                                 form,
-                                B = 5000,
+                                B = 2500,
                                 gene_modality_name = "gene",
                                 grna_modality_name = "grna_expression",
                                 grna_group_column_name = "grna_group",
@@ -54,13 +54,14 @@ run_sceptre_low_moi <- function(mm_odm,
   cat(crayon::green(' \u2713\n'))
 
   # step 2: assign gRNAs to cells (REWRITE TO ELIMINATE DEP ON LOWMOI AND IMPROVE MEM EFFICIENCY)
-  grna_group_assignments <- lowmoi::get_target_assignments_via_max_op(grna_odm); rm(grna_odm)
-  nt_cells <- grna_group_assignments == "non-targeting"
+  cat("Obtaining the cell-to-gRNA assignments.")
+  grna_group_info <- lowmoi::get_target_assignments_via_max_op(grna_odm) |> get_grna_group_info()
+  rm(grna_odm)
+  cat(crayon::green(' \u2713\n'))
 
   # step 3: perform the pairwise association test
   results <- perform_association_test_lowmoi_odm(mm_odm = mm_odm,
-                                                 grna_group_assignment = grna_group_assignments,
-                                                 nt_cell = nt_cells,
+                                                 grna_group_info = grna_group_info,
                                                  gene_grna_group_pairs = gene_grna_group_pairs,
                                                  B = B,
                                                  full_output = full_output,
