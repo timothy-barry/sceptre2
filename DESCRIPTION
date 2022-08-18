@@ -1,0 +1,11 @@
+Package: sceptre2
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person("Tim", "Barry", "tbarry2@andrew.cmu.edu", role = c("aut", "cre"),
+            "Gene", "Katsevich", "ekatsevi@wharton.upenn.edu", role = c("aut", "cre"))
+Description: Robust analysis of single-cell CRISPR screens.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.0
