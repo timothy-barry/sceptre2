@@ -6,26 +6,26 @@
 \usage{
 check_ondisc_inputs(
   mm_odm,
-  gene_grna_group_pairs,
+  response_grna_group_pairs,
   form,
-  gene_modality_name,
+  response_modality_name,
   grna_modality_name,
   grna_group_column_name,
   low_moi
 )
 }
 \arguments{
-\item{mm_odm}{a multimodal ondisc matrix containing gene and grna (either expression or assignment) modalities}
+\item{mm_odm}{a multimodal ondisc matrix containing response and grna (either expression or assignment) modalities}
 
-\item{gene_grna_group_pairs}{a data frame with columns \code{gene_id} and \code{grna_group} giving the gene ID / grna group pairs to analyze.}
+\item{response_grna_group_pairs}{a data frame with columns \code{response_id} and \code{grna_group} giving the response ID / grna group pairs to analyze.}
 
-\item{form}{a string that describes how to adjust for the covariates}
+\item{form}{a formula object (or string) specifying how to adjust for the covariates}
 
-\item{gene_modality_name}{name of the gene modality (e.g., "gene_expression")}
+\item{response_modality_name}{name of the response modality (e.g., "gene") within the multimodal ODM}
 
-\item{grna_modality_name}{name of the grna modality (e.g., "grna_expression")}
+\item{grna_modality_name}{name of the grna modality (e.g., "grna_expression") within the multimodal ODM}
 
-\item{grna_group_column_name}{name of the column within the feature covariate matrix of the gRNA ODM containing the gRNA groups}
+\item{grna_group_column_name}{name of the column within the feature covariate matrix of the gRNA ODM that contains the gRNA groups}
 
 \item{low_moi}{does this dataset correspond to low MOI (TRUE) or high MOI (FALSE)?}
 }

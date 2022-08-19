@@ -6,55 +6,79 @@
 \usage{
 run_sceptre_low_moi(
   mm_odm,
-  gene_grna_group_pairs,
+  response_grna_group_pairs,
   form,
-  B = 2500,
-  gene_modality_name = "gene",
-  grna_modality_name = "grna_expression",
+  response_modality_name = "gene",
+  grna_modality_name = "grna",
   grna_group_column_name = "grna_group",
+  B = 2500,
+  side = "both",
   full_output = FALSE
 )
 }
 \arguments{
-\item{mm_odm}{a multimodal ondisc matrix containing gene and grna (either expression or assignment) modalities}
+\item{mm_odm}{a multimodal ondisc matrix containing response and grna (either expression or assignment) modalities}
 
-\item{gene_grna_group_pairs}{a data frame with columns \code{gene_id} and \code{grna_group} giving the gene ID / grna group pairs to analyze.}
+\item{response_grna_group_pairs}{a data frame with columns \code{response_id} and \code{grna_group} giving the response ID / grna group pairs to analyze.}
 
-\item{form}{a string that describes how to adjust for the covariates}
+\item{form}{a formula object (or string) specifying how to adjust for the covariates}
+
+\item{response_modality_name}{name of the response modality (e.g., "gene") within the multimodal ODM}
+
+\item{grna_modality_name}{name of the grna modality (e.g., "grna_expression") within the multimodal ODM}
+
+\item{grna_group_column_name}{name of the column within the feature covariate matrix of the gRNA ODM that contains the gRNA groups}
 
 \item{B}{number of resamples to draw for permutation/conditional randomization test}
 
-\item{gene_modality_name}{name of the gene modality (e.g., "gene_expression")}
-
-\item{grna_modality_name}{name of the grna modality (e.g., "grna_expression")}
-
-\item{grna_group_column_name}{name of the column within the feature covariate matrix of the gRNA ODM containing the gRNA groups}
+\item{side}{sidedness of the test (one of "left", "both", and "right")}
 
 \item{full_output}{return the full output (TRUE) or a simplified, reduced output (FALSE)?}
 }
 \value{
-a data frame with columns \code{response_id}, \code{grna_group}, and \code{p_value} (as well as other entries).
+a data frame with columns \code{response_id}, \code{grna_group}, \code{p_value}, and \code{log_fold_change}.
 }
 \description{
 Runs sceptre on a low MOI dataset.
 }
 \examples{
 \dontrun{
+# load ondisc
 library(ondisc)
-# a small example
+
+# set the tap seq dir
 tap_seq_dir <- paste0(.get_config_path("LOCAL_SCEPTRE2_DATA_DIR"),
 "data/schraivogel/ground_truth_tapseq/")
+
+# obtain the multimodal odm
 mm_fp <- paste0(tap_seq_dir, "multimodal_metadata.rds")
 odm_fps <- paste0(tap_seq_dir, c("gene/matrix.odm", "grna_expression/matrix.odm"))
 mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp = mm_fp)
-gene_grna_group_pairs <- expand.grid(gene_id = mm_odm |> get_modality("gene") |> get_feature_ids(),
+
+# set the response grna group pairs
+response_grna_group_pairs <- expand.grid(response_id = mm_odm |> get_modality("gene") |> get_feature_ids() |> sample(3),
 grna_group = mm_odm |> get_modality("grna_expression") |>
-get_feature_covariates() |> dplyr::pull(target) |> unique())
-gene_grna_group_pairs <- gene_grna_group_pairs |> dplyr::filter(grna_group != "non-targeting")
-form <- "~ log(gene_n_nonzero) + log(gene_n_umis) + batch"
-B <- 2500; gene_modality_name <- "gene"; grna_modality_name <- "grna_assignment";
-grna_group_column_name <- "target"; n_pairs_to_sample <- 50; full_output <- FALSE; side <- "both"
-result <- run_sceptre_low_moi(mm_odm, gene_grna_group_pairs, form, B, gene_modality_name,
-grna_modality_name, grna_group_column_name, n_pairs_to_sample)
+get_feature_covariates() |> dplyr::pull(target) |> unique()) |>
+dplyr::filter(grna_group != "non-targeting")
+
+# set the arguments to the function
+form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
+response_modality_name <- "gene"
+grna_modality_name <- "grna_expression"
+grna_group_column_name <- "target"
+B <- 2500
+side <- "both"
+full_output <- FALSE
+
+# call the function
+result <- run_sceptre_low_moi(mm_odm,
+response_grna_group_pairs,
+form,
+response_modality_name,
+grna_modality_name,
+grna_group_column_name,
+B,
+side,
+full_output)
 }
 }

@@ -9,13 +9,13 @@ run_permutation_test(
   fitted_means,
   ground_truth_treatment_idxs,
   synthetic_treatment_idxs,
-  gene_theta,
+  response_theta,
   side,
   full_output
 )
 }
 \arguments{
-\item{expressions}{a vector of gene expressions}
+\item{expressions}{a vector of response expressions}
 
 \item{fitted_means}{the vector of fitted means, obtained from regressing the expressions onto the technical factors}
 
@@ -23,7 +23,7 @@ run_permutation_test(
 
 \item{synthetic_treatment_idxs}{indexes of the "treatment" cells under the resampled data}
 
-\item{gene_theta}{estimated theta of gene expression distribution}
+\item{response_theta}{estimated theta of response expression distribution}
 
 \item{side}{sidedness of the test (one of "left", "right", or "both")}
 

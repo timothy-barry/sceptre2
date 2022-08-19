@@ -6,13 +6,13 @@
 #' @param low_moi does this dataset correspond to low MOI (TRUE) or high MOI (FALSE)?
 #'
 #' @return a thinned and verified multimodal ondisc matrix
-check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modality_name, grna_modality_name, grna_group_column_name, low_moi) {
+check_ondisc_inputs <- function(mm_odm, response_grna_group_pairs, form, response_modality_name, grna_modality_name, grna_group_column_name, low_moi) {
   modality_names <- names(mm_odm@modalities)
-  # 1. gene_modality_name must be in modality_names; set gene modality name to `gene`
-  if (!(gene_modality_name %in% modality_names)) {
-    stop(paste0("`", gene_modality_name, "` must be a modality name in the multimodal ondisc matrix."))
+  # 1. response_modality_name must be in modality_names; set response modality name to `response`
+  if (!(response_modality_name %in% modality_names)) {
+    stop(paste0("`", response_modality_name, "` must be a modality name in the multimodal ondisc matrix."))
   } else {
-    names(mm_odm@modalities)[names(mm_odm@modalities) == gene_modality_name] <- "gene"
+    names(mm_odm@modalities)[names(mm_odm@modalities) == response_modality_name] <- "response"
   }
 
   # 2. "grna" must be in modality_names; set grna modality name to `grna`
@@ -38,28 +38,28 @@ check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modali
   }
   mm_odm@modalities[["grna"]]@feature_covariates <- grna_feature_covariates
 
-  # 4. "gene_id" must be a column of gene_grna_group_pairs
-  if (!("gene_id" %in% colnames(gene_grna_group_pairs))) {
-    stop("The gene_grna_group_pairs data frame must contain a column called `gene_id`.")
+  # 4. "response_id" must be a column of response_grna_group_pairs
+  if (!("response_id" %in% colnames(response_grna_group_pairs))) {
+    stop("The response_grna_group_pairs data frame must contain a column called `response_id`.")
   }
 
-  # 5. "grna_group" must be a column of gene_grna_group_pairs
-  if (!("grna_group" %in% colnames(gene_grna_group_pairs))) {
-    stop("The gene_grna_group_pairs data frame must contain a column called `grna_group`.")
+  # 5. "grna_group" must be a column of response_grna_group_pairs
+  if (!("grna_group" %in% colnames(response_grna_group_pairs))) {
+    stop("The response_grna_group_pairs data frame must contain a column called `grna_group`.")
   }
 
-  # 6. check that the gene IDs in the gene_grna_group_pairs data frame are a subset of the gene IDs of the gene ODM
-  odm_gene_ids <- mm_odm |> ondisc::get_modality("gene") |> ondisc::get_feature_ids()
-  gene_grna_group_pairs_gene_ids <- as.character(gene_grna_group_pairs$gene_id)
-  if (!all(gene_grna_group_pairs_gene_ids %in% odm_gene_ids)) {
-    stop("The gene IDs in the gene_grna_group_pairs data frame are not a subset of the gene IDs in the gene ondisc matrix.")
+  # 6. check that the response IDs in the response_grna_group_pairs data frame are a subset of the response IDs of the response ODM
+  odm_response_ids <- mm_odm |> ondisc::get_modality("response") |> ondisc::get_feature_ids()
+  response_grna_group_pairs_response_ids <- as.character(response_grna_group_pairs$response_id)
+  if (!all(response_grna_group_pairs_response_ids %in% odm_response_ids)) {
+    stop("The response IDs in the response_grna_group_pairs data frame are not a subset of the response IDs in the response ondisc matrix.")
   }
 
-  # 7. check that the grna groups in the gene_grna_group_pairs data frame are a subset of the grna groups in the grna ODM
+  # 7. check that the grna groups in the response_grna_group_pairs data frame are a subset of the grna groups in the grna ODM
   odm_grna_groups <- grna_feature_covariates$grna_group
-  gene_grna_group_pairs_grna_groups <- as.character(gene_grna_group_pairs$grna_group)
-  if (!all(gene_grna_group_pairs_grna_groups %in% odm_grna_groups)) {
-    stop("The grna groups in the gene_grna_group_pairs data frame are not a subset of the grna groups in the grna ondisc matrix.")
+  response_grna_group_pairs_grna_groups <- as.character(response_grna_group_pairs$grna_group)
+  if (!all(response_grna_group_pairs_grna_groups %in% odm_grna_groups)) {
+    stop("The grna groups in the response_grna_group_pairs data frame are not a subset of the grna groups in the grna ondisc matrix.")
   }
 
 
@@ -67,12 +67,14 @@ check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modali
   # UPDATE MM ODM
   ###############
   # 1. apply a formula object to the global cell covariates
-  if (!is.na(form) && form != "NA") {
-    if (grepl("offset", form)) stop("Offsets are not currently supported in formulas within sceptre.")
+  if (!identical(form, NA) && form != "NA") {
+    if (any(grepl("offset", form))) stop("Offsets are not currently supported in formulas within sceptre.")
     global_cell_covariates <- mm_odm |> ondisc::get_cell_covariates()
     global_cell_covariates_new <- stats::model.matrix(object = stats::as.formula(form),
                                                data = global_cell_covariates) |> as.data.frame()
     mm_odm@global_cell_covariates <- global_cell_covariates_new
+  } else {
+    warning("Supplying a formula object is strongly recommended. Regressing out all columns of the untransformed global cell covariate matrix.")
   }
 
   # 2. Check for weird numbers in the global cell covariate matrix
@@ -86,6 +88,6 @@ check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modali
       stop(paste0("The column `", col_name, "` of the global cell covariate matrix contains entries that are either NA, -Inf, or Inf. Remove these entries (by, for example, removing the corresponding cells from the multimodal ondisc matrix)."))
     }
   }
-  mm_odm <- ondisc:::thin_multimodal_odm(mm_odm, "grna", "gene", "grna_group")
+  mm_odm <- ondisc:::thin_multimodal_odm(mm_odm, "grna", "response", "grna_group")
   return(mm_odm)
 }

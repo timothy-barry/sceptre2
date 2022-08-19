@@ -9,11 +9,11 @@ run_permutations(
   fitted_means,
   ground_truth_treatment_idxs,
   synthetic_treatment_idxs,
-  gene_theta
+  response_theta
 )
 }
 \arguments{
-\item{expressions}{a vector of gene expressions}
+\item{expressions}{a vector of response expressions}
 
 \item{fitted_means}{the vector of fitted means, obtained from regressing the expressions onto the technical factors}
 
@@ -21,7 +21,7 @@ run_permutations(
 
 \item{synthetic_treatment_idxs}{indexes of the "treatment" cells under the resampled data}
 
-\item{gene_theta}{estimated theta of gene expression distribution}
+\item{response_theta}{estimated theta of response expression distribution}
 }
 \value{
 a list containing (i) z_star (the ground truth test statistic), (ii) z_null (the vector of resampled test statistics), and (iii) log_fold_change (the estimated log fold change)

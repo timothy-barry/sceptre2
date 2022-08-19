@@ -4,14 +4,14 @@
 \alias{compute_nb_test_stat}
 \title{Compute NB test statistic}
 \usage{
-compute_nb_test_stat(y, mu, gene_theta)
+compute_nb_test_stat(y, mu, response_theta)
 }
 \arguments{
 \item{y}{vector of expressions}
 
 \item{mu}{vector of means}
 
-\item{gene_theta}{estimated theta of gene expression distribution}
+\item{response_theta}{estimated theta of response expression distribution}
 }
 \value{
 the test statistic

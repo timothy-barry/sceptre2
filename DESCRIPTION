@@ -20,3 +20,4 @@ Imports:
     sn,
     tidyr,
     VGAM
+Remotes: timothy-barry/ondisc
