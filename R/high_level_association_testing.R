@@ -16,7 +16,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
 
     # perform the response precomputation
     response_precomp <- run_response_precomputation_low_level(expressions = expressions[grna_group_info[["grna_specific_idxs"]][["non-targeting"]]],
-                                                      covariate_matrix = global_cell_covariates[grna_group_info[["grna_specific_idxs"]][["non-targeting"]],])
+                                                              covariate_matrix = global_cell_covariates[grna_group_info[["grna_specific_idxs"]][["non-targeting"]],])
 
     # compute the fitted values of the regression
     pieces <- get_pieces_from_response_precomp(response_precomp = response_precomp,

@@ -23,7 +23,7 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
     response_theta <- tryCatch({
       MASS::theta.ml(expressions, pois_fit$fitted.values, limit = 50)[1]
     }, error = function(e) backup_2(pois_fit), warning = function(w) backup_2(pois_fit))
-    response_theta <- max(response_theta, 0.1)
+    response_theta <- min(max(response_theta, 0.1), 1000)
     fitted_coefs <- tryCatch({
       fit_nb <- VGAM::vglm(formula = expressions ~ . + 0, family = VGAM::negbinomial.size(response_theta), data = covariate_matrix)
       stats::coef(fit_nb)
