@@ -7,21 +7,28 @@
 #'
 #' @return a named vector of fitted coefficients, alongside the fitted size parameter (named "response_theta")
 run_response_precomputation_low_level <- function(expressions, covariate_matrix) {
-  # second backup: method of moments
+  # backup: return fitted coefficients from Poisson regression
+  backup_3 <- function(pois_fit) {
+    stats::coef(pois_fit)
+  }
+
+  # Backup: method of moments
   backup_2 <- function(pois_fit) {
     MASS::theta.mm(y = expressions, mu = pois_fit$fitted.values, dfr = pois_fit$df.residual)
   }
 
-  # first backup: MLE on poisson reg
+  #Backup: MLE on poisson reg
   backup <- function() {
     pois_fit <- stats::glm(expressions ~ . + 0, data = covariate_matrix, family = stats::poisson())
     response_theta <- tryCatch({
       MASS::theta.ml(expressions, pois_fit$fitted.values, limit = 50)[1]
     }, error = function(e) backup_2(pois_fit), warning = function(w) backup_2(pois_fit))
     response_theta <- max(response_theta, 0.1)
-    fit_nb <- VGAM::vglm(formula = expressions ~ . + 0, family = VGAM::negbinomial.size(response_theta), data = covariate_matrix)
-    fitted_coefs <- stats::coef(fit_nb)
-    return(c(fitted_coefs = fitted_coefs, response_theta = response_theta))
+    fitted_coefs <- tryCatch({
+      fit_nb <- VGAM::vglm(formula = expressions ~ . + 0, family = VGAM::negbinomial.size(response_theta), data = covariate_matrix)
+      stats::coef(fit_nb)
+    }, error = function(e) backup_3(pois_fit), warning = function(w) backup_3(pois_fit))
+    return(c(fitted_coefs, response_theta = response_theta))
   }
 
   # try to fit a negative binomial GLM with unknown dispersion

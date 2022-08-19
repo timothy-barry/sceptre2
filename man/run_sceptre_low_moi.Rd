@@ -56,7 +56,8 @@ odm_fps <- paste0(tap_seq_dir, c("gene/matrix.odm", "grna_expression/matrix.odm"
 mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp = mm_fp)
 
 # set the response grna group pairs
-response_grna_group_pairs <- expand.grid(response_id = mm_odm |> get_modality("gene") |> get_feature_ids() |> sample(3),
+response_grna_group_pairs <- expand.grid(response_id = mm_odm |> get_modality("gene") |>
+get_feature_ids() |> sample(3),
 grna_group = mm_odm |> get_modality("grna_expression") |>
 get_feature_covariates() |> dplyr::pull(target) |> unique()) |>
 dplyr::filter(grna_group != "non-targeting")
