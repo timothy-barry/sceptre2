@@ -10,7 +10,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, gene_gr
   global_cell_covariates <- mm_odm |> get_cell_covariates()
 
   # loop over the gene ids
-  for (gene_id in gene_ids) {
+  out <- lapply(X = gene_ids, FUN = function(gene_id) {
     # load expression data
     expressions <- as.numeric(gene_odm[[gene_id,]])
 
@@ -29,7 +29,8 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, gene_gr
       dplyr::pull(grna_group) |>
       as.character()
 
-    for (grna_group in grna_groups) {
+    x <- sapply(X = grna_groups, FUN = function(grna_group) {
+      print(paste0("Working on gene ", gene_id, " and gRNA group ", grna_group, "."))
       # initial grna group-specific vectors and values
       n_cells_curr_grna_group <- grna_group_info[["n_cells_per_grna"]][[grna_group]]
       subset_vect <- c(grna_group_info[["grna_specific_idxs"]][[grna_group]],
@@ -52,6 +53,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, gene_gr
                                        gene_theta = gene_theta,
                                        side = side,
                                        full_output = full_output)
-    }
-  }
+    }) |> t() |> data.table::as.data.table() |>
+      dplyr::mutate(grna_group = grna_groups, gene_id = gene_id)
+  }) |> data.table::rbindlist()
 }

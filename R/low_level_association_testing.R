@@ -1,9 +1,11 @@
+#' Run permutation test
+#'
 #' @param expressions a vector of gene expressions
 #' @param fitted_means the vector of fitted means, obtained from regressing the expressions onto the technical factors
 #' @param ground_truth_treatment_idxs indexes of the "treatment" cells on the ground truth data
 #' @param synthetic_treatment_idxs indexes of the "treatment" cells under the resampled data
-#' @param side
-#' @param full_output
+#' @param side sidedness of the test (one of "left", "right", or "both")
+#' @param full_output return the full output (TRUE) or reduced output (FALSE)?
 #' @param gene_theta estimated theta of gene expression distribution
 run_permutation_test <- function(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, gene_theta, side, full_output) {
   permutation_runs <- run_permutations(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, gene_theta)

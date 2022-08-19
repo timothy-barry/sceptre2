@@ -55,6 +55,9 @@ gene_grna_group_pairs <- expand.grid(gene_id = mm_odm |> get_modality("gene") |>
 grna_group = mm_odm |> get_modality("grna_expression") |> get_feature_covariates() |> dplyr::pull(target) |> unique())
 gene_grna_group_pairs <- gene_grna_group_pairs |> dplyr::filter(grna_group != "non-targeting")
 form <- "~ log(gene_n_nonzero) + log(gene_n_umis) + batch"
-threshold <- 8; B <- 2500; gene_modality_name <- "gene"; grna_modality_name <- "grna_assignment"; grna_group_column_name <- "target"; n_pairs_to_sample <- 50; full_output <- FALSE; side <- "both"
+B <- 2500; gene_modality_name <- "gene"; grna_modality_name <- "grna_assignment";
+grna_group_column_name <- "target"; n_pairs_to_sample <- 50; full_output <- FALSE; side <- "both"
+result <- run_sceptre_low_moi(mm_odm, gene_grna_group_pairs, form, B, gene_modality_name,
+grna_modality_name, grna_group_column_name, n_pairs_to_sample)
 }
 }
