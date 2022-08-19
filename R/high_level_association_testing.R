@@ -7,7 +7,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, gene_gr
   gene_ids <- as.character(unique(gene_grna_group_pairs$gene_id))
 
   # get the global cell covariates
-  global_cell_covariates <- mm_odm |> get_cell_covariates()
+  global_cell_covariates <- mm_odm |> ondisc::get_cell_covariates()
 
   # loop over the gene ids
   out <- lapply(X = gene_ids, FUN = function(gene_id) {

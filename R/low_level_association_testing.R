@@ -56,7 +56,7 @@ compute_nb_test_stat <- function(y, mu, gene_theta) {
 
 
 prepare_output <- function(permutation_runs, null_dist_fit, p_val, full_output) {
-  output <- c(z_star = permutation_runs$z_star,
+  output <- c(z_value = permutation_runs$z_star,
               log_fold_change = permutation_runs$log_fold_change,
               p_val = p_val)
 

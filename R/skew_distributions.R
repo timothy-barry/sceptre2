@@ -6,9 +6,9 @@
 #' @param max_it maximum number of iterations.
 #'
 #' @return a list containing (i) dp (the fitted model parameters), (ii) convergence success (TRUE or FALSE), and (iii) the number of iterations
-#' @export
 #'
 #' @examples
+#' \dontrun{
 #' y <- sn::rsn(n = 2500, dp = c(-.5, 1.5, 2))
 #' fit_st <- fit_skew_t(y)
 #' fit_sn <- fit_skew_normal(y)
@@ -18,6 +18,7 @@
 #' y <- rpois(2000, 0.01)
 #' fit_st <- fit_skew_t(y)
 #' fit_sn <- fit_skew_normal(y)
+#' }
 fit_skew_t <- function(y, max_it = 70) {
   w <- rep(1, length(y))
   x <- matrix(1, nrow = length(y))

@@ -23,7 +23,7 @@ check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modali
   }
 
   # 3. "grna_group" must be a column of the grna feature covariate matrix
-  grna_feature_covariates <- mm_odm |> get_modality("grna") |> get_feature_covariates()
+  grna_feature_covariates <- mm_odm |> ondisc::get_modality("grna") |> ondisc::get_feature_covariates()
   if (!(grna_group_column_name %in% colnames(grna_feature_covariates))) {
     stop(paste0("The feature covariates matrix of the `grna` ondisc matrix must have a column called `", grna_group_column_name, "`."))
   } else {
@@ -49,7 +49,7 @@ check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modali
   }
 
   # 6. check that the gene IDs in the gene_grna_group_pairs data frame are a subset of the gene IDs of the gene ODM
-  odm_gene_ids <- mm_odm |> get_modality("gene") |> get_feature_ids()
+  odm_gene_ids <- mm_odm |> ondisc::get_modality("gene") |> ondisc::get_feature_ids()
   gene_grna_group_pairs_gene_ids <- as.character(gene_grna_group_pairs$gene_id)
   if (!all(gene_grna_group_pairs_gene_ids %in% odm_gene_ids)) {
     stop("The gene IDs in the gene_grna_group_pairs data frame are not a subset of the gene IDs in the gene ondisc matrix.")
@@ -69,14 +69,14 @@ check_ondisc_inputs <- function(mm_odm, gene_grna_group_pairs, form, gene_modali
   # 1. apply a formula object to the global cell covariates
   if (!is.na(form) && form != "NA") {
     if (grepl("offset", form)) stop("Offsets are not currently supported in formulas within sceptre.")
-    global_cell_covariates <- mm_odm |> get_cell_covariates()
-    global_cell_covariates_new <- model.matrix(object = as.formula(form),
+    global_cell_covariates <- mm_odm |> ondisc::get_cell_covariates()
+    global_cell_covariates_new <- stats::model.matrix(object = stats::as.formula(form),
                                                data = global_cell_covariates) |> as.data.frame()
     mm_odm@global_cell_covariates <- global_cell_covariates_new
   }
 
   # 2. Check for weird numbers in the global cell covariate matrix
-  global_cell_covariates <- mm_odm |> get_cell_covariates()
+  global_cell_covariates <- mm_odm |> ondisc::get_cell_covariates()
   if (ncol(global_cell_covariates) == 0) {
     stop("The global cell covariate matrix of the multimodal ondisc matrix should contain at least one column.")
   }

@@ -21,6 +21,7 @@ a list containing (i) dp (the fitted model parameters), (ii) convergence success
 Fit a skew-t or skew-normal distribution on a vector of data.
 }
 \examples{
+\dontrun{
 y <- sn::rsn(n = 2500, dp = c(-.5, 1.5, 2))
 fit_st <- fit_skew_t(y)
 fit_sn <- fit_skew_normal(y)
@@ -30,4 +31,5 @@ plot_fitted_density(fit_sn$dp, y, "SN")
 y <- rpois(2000, 0.01)
 fit_st <- fit_skew_t(y)
 fit_sn <- fit_skew_normal(y)
+}
 }

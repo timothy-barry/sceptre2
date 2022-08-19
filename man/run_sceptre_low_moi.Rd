@@ -12,7 +12,6 @@ run_sceptre_low_moi(
   gene_modality_name = "gene",
   grna_modality_name = "grna_expression",
   grna_group_column_name = "grna_group",
-  n_pairs_to_sample = 50,
   full_output = FALSE
 )
 }
@@ -31,11 +30,7 @@ run_sceptre_low_moi(
 
 \item{grna_group_column_name}{name of the column within the feature covariate matrix of the gRNA ODM containing the gRNA groups}
 
-\item{n_pairs_to_sample}{number of pairs to sample from \code{response_grna_group_pairs} for debugging purposes}
-
 \item{full_output}{return the full output (TRUE) or a simplified, reduced output (FALSE)?}
-
-\item{threshold}{threshold to use for assigning gRNAs to cells}
 }
 \value{
 a data frame with columns \code{response_id}, \code{grna_group}, and \code{p_value} (as well as other entries).
@@ -47,12 +42,14 @@ Runs sceptre on a low MOI dataset.
 \dontrun{
 library(ondisc)
 # a small example
-tap_seq_dir <- paste0(.get_config_path("LOCAL_SCEPTRE2_DATA_DIR"), "data/schraivogel/ground_truth_tapseq/")
+tap_seq_dir <- paste0(.get_config_path("LOCAL_SCEPTRE2_DATA_DIR"),
+"data/schraivogel/ground_truth_tapseq/")
 mm_fp <- paste0(tap_seq_dir, "multimodal_metadata.rds")
 odm_fps <- paste0(tap_seq_dir, c("gene/matrix.odm", "grna_expression/matrix.odm"))
 mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp = mm_fp)
 gene_grna_group_pairs <- expand.grid(gene_id = mm_odm |> get_modality("gene") |> get_feature_ids(),
-grna_group = mm_odm |> get_modality("grna_expression") |> get_feature_covariates() |> dplyr::pull(target) |> unique())
+grna_group = mm_odm |> get_modality("grna_expression") |>
+get_feature_covariates() |> dplyr::pull(target) |> unique())
 gene_grna_group_pairs <- gene_grna_group_pairs |> dplyr::filter(grna_group != "non-targeting")
 form <- "~ log(gene_n_nonzero) + log(gene_n_umis) + batch"
 B <- 2500; gene_modality_name <- "gene"; grna_modality_name <- "grna_assignment";
