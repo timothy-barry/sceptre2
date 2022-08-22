@@ -10,8 +10,8 @@
 run_permutation_test <- function(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta, side, full_output) {
   permutation_runs <- run_permutations(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta)
   null_dist_fit <- fit_skew_normal(y = permutation_runs$z_null)
-  p_val <- compute_skew_normal_p_value(dp = null_dist_fit$dp, z_star = permutation_runs$z_star, side = side)
-  out <- prepare_output(permutation_runs, null_dist_fit, p_val, full_output)
+  p_value <- compute_skew_normal_p_value(dp = null_dist_fit$dp, z_star = permutation_runs$z_star, side = side)
+  out <- prepare_output(permutation_runs, null_dist_fit, p_value, full_output)
   return(out)
 }
 
@@ -55,10 +55,10 @@ compute_nb_test_stat <- function(y, mu, response_theta) {
 }
 
 
-prepare_output <- function(permutation_runs, null_dist_fit, p_val, full_output) {
+prepare_output <- function(permutation_runs, null_dist_fit, p_value, full_output) {
   output <- c(z_value = permutation_runs$z_star,
               log_fold_change = permutation_runs$log_fold_change,
-              p_val = p_val)
+              p_value = p_value)
 
   if (full_output) {
     resampled_stats <- stats::setNames(permutation_runs$z_null,
