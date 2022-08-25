@@ -15,3 +15,22 @@ get_grna_group_info <- function(grna_group_assignments) {
   return(list(grna_specific_idxs = grna_specific_idxs,
               n_cells_per_grna = n_cells_per_grna))
 }
+
+
+compute_empirical_p_value_result_row <- function(row, side = "both") {
+  z_null <- row[grepl(pattern = "z_null_*", x = names(row))]
+  z_star <- row["z_value"]
+  compute_empirical_p_value(z_star, z_null, side)
+}
+
+
+plot_fitted_density_result_row <- function(row) {
+  z_null <- row[grepl(pattern = "z_null_*", x = names(row))]
+  z_star <- row["z_value"]
+  dp <- row[c("xi", "omega", "alpha", "nu")]
+  dp <- dp[!is.na(dp)]
+  distribution <- if (length(dp) == 4) "ST" else "SN"
+  p_out <- plot_fitted_density(dp = dp, z_null = z_null,
+                               distribution = distribution, z_star = z_star)
+  p_out
+}

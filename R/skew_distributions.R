@@ -68,6 +68,24 @@ compute_skew_normal_p_value <- function(dp, z_star, side) {
 }
 
 
+#' Compute empirical p-value
+#'
+#' Computes an empirical permutation test p-value.
+#'
+#' @param z_star ground truth test statistic
+#' @param z_null the null test statistics
+#' @param side side of the tests
+#'
+#' @return the empirical p-value
+compute_empirical_p_value <- function(z_star, z_null, side) {
+  out_p <- switch(side,
+                  "left" = mean(c(-Inf, z_null) <= z_star),
+                  "right" = mean(c(Inf, z_null) >= z_star),
+                  "both" = mean(c(Inf, abs(z_null)) >= abs(z_star)))
+  return(out_p)
+}
+
+
 #' Plot fitted density
 #'
 #' Plots a fitted skew-normal or skew-t density superimposed over the histogram of resampled test statistics to which the density was fitted.

@@ -20,7 +20,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
 
     # compute the fitted values of the regression
     pieces <- get_pieces_from_response_precomp(response_precomp = response_precomp,
-                                           global_cell_covariates = global_cell_covariates)
+                                               global_cell_covariates = global_cell_covariates)
     response_theta <- pieces$response_theta
     fitted_means <- pieces$fitted_means
 
@@ -38,6 +38,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
       n_cells_curr_de <- n_cells_curr_grna_group + grna_group_info[["n_cells_per_grna"]][["non-targeting"]]
 
       # generate synthetic indexes
+      set.seed(4)
       synthetic_treatment_idxs <- replicate(n = B, expr = sample.int(n = n_cells_curr_de, size = n_cells_curr_grna_group))
 
       # obtain vectors to pass to permutation test
@@ -53,6 +54,8 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
                                        response_theta = response_theta,
                                        side = side,
                                        full_output = full_output)
+      # compute_empirical_p_value_result_row(perm_out)
+      # plot_fitted_density_result_row(perm_out)
     }) |> t() |> data.table::as.data.table() |>
       dplyr::mutate(grna_group = grna_groups, response_id = response_id)
   }) |> data.table::rbindlist()
