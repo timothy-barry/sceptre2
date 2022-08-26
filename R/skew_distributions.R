@@ -81,7 +81,8 @@ compute_empirical_p_value <- function(z_star, z_null, side) {
   out_p <- switch(side,
                   "left" = mean(c(-Inf, z_null) <= z_star),
                   "right" = mean(c(Inf, z_null) >= z_star),
-                  "both" = mean(c(Inf, abs(z_null)) >= abs(z_star)))
+                  "both" = 2 * min(mean(c(-Inf, z_null) <= z_star),
+                                   mean(c(Inf, z_null) >= z_star)))
   return(out_p)
 }
 

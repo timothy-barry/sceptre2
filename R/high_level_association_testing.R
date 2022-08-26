@@ -56,6 +56,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
                                        full_output = full_output)
       # compute_empirical_p_value_result_row(perm_out)
       # plot_fitted_density_result_row(perm_out)
+      # perm_out["p_value"]
     }) |> t() |> data.table::as.data.table() |>
       dplyr::mutate(grna_group = grna_groups, response_id = response_id)
   }) |> data.table::rbindlist()
