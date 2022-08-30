@@ -87,6 +87,28 @@ compute_empirical_p_value <- function(z_star, z_null, side) {
 }
 
 
+#' Compute KS test
+#'
+#' Runs a KS test on the resampled test statistics
+#'
+#' @param z_null the vector of null test statistics
+#' @param dp the fitted parameters of the distribution
+#' @param distribution the distribution, either "SN" (for skew-normal) or "ST" (for skew-t)
+#'
+#' @return a list containing (i) the KS test statistic, and (ii) the KS p-value
+compute_ks_test <- function(z_null, dp, distribution) {
+  if (distribution == "SN") {
+    cdf <- function(x) sn::psn(x = x, dp = dp)
+  } else if (distribution == "ST") {
+    cdf <- function(x) sn::pst(x = x, dp = dp)
+  }
+  ret <- stats::ks.test(x = z_null, y = cdf)
+  out <- stats::setNames(c(ret$statistic, ks_p_value = ret$p.value),
+                         c("ks_stat", "ks_p_value"))
+  return(out)
+}
+
+
 #' Plot fitted density
 #'
 #' Plots a fitted skew-normal or skew-t density superimposed over the histogram of resampled test statistics to which the density was fitted.

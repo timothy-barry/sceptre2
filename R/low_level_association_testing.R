@@ -11,7 +11,10 @@ run_permutation_test <- function(expressions, fitted_means, ground_truth_treatme
   permutation_runs <- run_permutations(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta)
   null_dist_fit <- fit_skew_normal(y = permutation_runs$z_null)
   p_value <- compute_skew_normal_p_value(dp = null_dist_fit$dp, z_star = permutation_runs$z_star, side = side)
-  out <- prepare_output(permutation_runs, null_dist_fit, p_value, full_output)
+  out <- return(list(permutation_runs = permutation_runs,
+                     null_dist_fit = null_dist_fit,
+                     p_value = p_value))
+  # out <- prepare_output(permutation_runs, null_dist_fit, p_value, full_output)
   return(out)
 }
 
@@ -55,19 +58,38 @@ compute_nb_test_stat <- function(y, mu, response_theta) {
 }
 
 
-prepare_output <- function(permutation_runs, null_dist_fit, p_value, full_output) {
-  output <- c(z_value = permutation_runs$z_star,
-              log_fold_change = permutation_runs$log_fold_change,
-              p_value = p_value)
+prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency_table, side, precomp_backup, n_covariates, precomp_str, full_output) {
+  # basic output: z_value, log_fold_change, p_value
+  output <- data.frame(z_value = permutation_runs$z_star,
+                       log_fold_change = permutation_runs$log_fold_change,
+                       p_value = p_value)
 
-  if (full_output) {
+  # intermediate output: ks_fit, empirical p-value, contingency table, fit information
+  if (full_output == 2) {
+    ks_fit <- compute_ks_test(z_null = permutation_runs$z_null,
+                              dp = null_dist_fit$dp,
+                              distribution = "SN")
+    p_value_emp <- compute_empirical_p_value(z_star = permutation_runs$z_star,
+                                             z_null = permutation_runs$z_null,
+                                             side = side)
+    output[names(ks_fit)] <- ks_fit
+    output[names(null_dist_fit$dp)] <- null_dist_fit$dp
+    output[names(contingency_table)] <- contingency_table
+    output <- cbind(output, data.frame(p_value_emp = p_value_emp,
+                                       n_covariates = n_covariates,
+                                       n_iterations = null_dist_fit$n_iterations,
+                                       convergence = null_dist_fit$convergence,
+                                       precomp_summary = precomp_str))
+  }
+
+  # maximum output: resampled test statistics
+  if (full_output == 3) {
     resampled_stats <- stats::setNames(permutation_runs$z_null,
                                        paste0("z_null_", seq(1, length(permutation_runs$z_null))))
-    output <- c(output,
-                null_dist_fit$dp,
-                n_iterations = null_dist_fit$n_iterations,
-                convergence = null_dist_fit$convergence,
-                resampled_stats)
+
+    output <- cbind(output, t(data.frame(resampled_stats)))
+    row.names(output) <- NULL
   }
+
   return(output)
 }

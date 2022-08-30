@@ -7,7 +7,7 @@ int main() {
   // number of samples to draw (WOR)
   int k = 250;
   // total number of cells
-  int n_cells_total = 10000;
+  int n_cells_total = 13000;
   // allocate the binary map
   vector<int> binary_map(n_cells_total, 0);
   // allocate the vector of random indexes
@@ -21,6 +21,7 @@ int main() {
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> distr(0, n_cells_total - 1);
 
+  for (int j = 0; j < 100000; j++) {
   // perform sampling WOR
   while(curr_count < k) {
     random_idx = distr(gen);
@@ -30,9 +31,10 @@ int main() {
       curr_count ++;
     }
   }
-  // finally, reset the binary map
+  // finally, reset the binary map and current count
   for (int i = 0; i < k; i ++) {
     binary_map[random_idxs[i]] = 0;
   }
-  
+  curr_count = 0;
+  }
 }

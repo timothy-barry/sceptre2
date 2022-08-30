@@ -17,9 +17,10 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
     # perform the response precomputation
     response_precomp <- run_response_precomputation_low_level(expressions = expressions[grna_group_info[["grna_specific_idxs"]][["non-targeting"]]],
                                                               covariate_matrix = global_cell_covariates[grna_group_info[["grna_specific_idxs"]][["non-targeting"]],])
+    precomp_str <- response_precomp$precomp_str
 
     # compute the fitted values of the regression
-    pieces <- get_pieces_from_response_precomp(response_precomp = response_precomp,
+    pieces <- get_pieces_from_response_precomp(response_precomp = response_precomp$precomp,
                                                global_cell_covariates = global_cell_covariates)
     response_theta <- pieces$response_theta
     fitted_means <- pieces$fitted_means
@@ -46,6 +47,9 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
       curr_fitted_means <- fitted_means[subset_vect]
       ground_truth_treatment_idxs <- seq(1, n_cells_curr_grna_group)
 
+      # compute sample sizes in both treatment and control groups
+      contingency_table <- get_contingency_table(curr_expressions, ground_truth_treatment_idxs)
+
       # call the low-level association test function
       perm_out <- run_permutation_test(expressions = curr_expressions,
                                        fitted_means = curr_fitted_means,
@@ -54,10 +58,18 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
                                        response_theta = response_theta,
                                        side = side,
                                        full_output = full_output)
-      # compute_empirical_p_value_result_row(perm_out)
-      # plot_fitted_density_result_row(perm_out)
-      # perm_out["p_value"]
-    }) |> t() |> data.table::as.data.table() |>
-      dplyr::mutate(grna_group = grna_groups, response_id = response_id)
+
+      prepare_output(permutation_runs = perm_out$permutation_runs,
+                     null_dist_fit = perm_out$null_dist_fit,
+                     p_value = perm_out$p_value,
+                     contingency_table = contingency_table,
+                     side = side,
+                     precomp_backup = response_precomp$backup,
+                     n_covariates = ncol(global_cell_covariates),
+                     precomp_str = response_precomp$precomp_str,
+                     full_output = 2)
+
+    }) |> t() |> data.table::as.data.table() |> dplyr::mutate(grna_group = grna_groups,
+                                                              response_id = response_id)
   }) |> data.table::rbindlist()
 }
