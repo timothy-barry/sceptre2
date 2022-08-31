@@ -10,8 +10,7 @@ run_permutation_test(
   ground_truth_treatment_idxs,
   synthetic_treatment_idxs,
   response_theta,
-  side,
-  full_output
+  side
 )
 }
 \arguments{

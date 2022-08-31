@@ -7,14 +7,13 @@
 #' @param side sidedness of the test (one of "left", "right", or "both")
 #' @param full_output return the full output (TRUE) or reduced output (FALSE)?
 #' @param response_theta estimated theta of response expression distribution
-run_permutation_test <- function(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta, side, full_output) {
+run_permutation_test <- function(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta, side) {
   permutation_runs <- run_permutations(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta)
   null_dist_fit <- fit_skew_normal(y = permutation_runs$z_null)
   p_value <- compute_skew_normal_p_value(dp = null_dist_fit$dp, z_star = permutation_runs$z_star, side = side)
   out <- return(list(permutation_runs = permutation_runs,
                      null_dist_fit = null_dist_fit,
                      p_value = p_value))
-  # out <- prepare_output(permutation_runs, null_dist_fit, p_value, full_output)
   return(out)
 }
 
@@ -58,14 +57,14 @@ compute_nb_test_stat <- function(y, mu, response_theta) {
 }
 
 
-prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency_table, side, precomp_backup, n_covariates, precomp_str, full_output) {
+prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency_table, side, n_covariates, precomp_str, output_amount) {
   # basic output: z_value, log_fold_change, p_value
   output <- data.frame(z_value = permutation_runs$z_star,
                        log_fold_change = permutation_runs$log_fold_change,
                        p_value = p_value)
 
   # intermediate output: ks_fit, empirical p-value, contingency table, fit information
-  if (full_output == 2) {
+  if (output_amount == 2) {
     ks_fit <- compute_ks_test(z_null = permutation_runs$z_null,
                               dp = null_dist_fit$dp,
                               distribution = "SN")
@@ -83,7 +82,7 @@ prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency
   }
 
   # maximum output: resampled test statistics
-  if (full_output == 3) {
+  if (output_amount == 3) {
     resampled_stats <- stats::setNames(permutation_runs$z_null,
                                        paste0("z_null_", seq(1, length(permutation_runs$z_null))))
 

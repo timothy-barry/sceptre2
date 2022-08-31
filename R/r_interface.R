@@ -10,7 +10,7 @@
 #' @param grna_modality_name name of the grna modality (e.g., "grna_expression") within the multimodal ODM
 #' @param grna_group_column_name name of the column within the feature covariate matrix of the gRNA ODM that contains the gRNA groups
 #' @param side sidedness of the test (one of "left", "both", and "right")
-#' @param full_output return the full output (TRUE) or a simplified, reduced output (FALSE)?
+#' @param output_amount return the full output (TRUE) or a simplified, reduced output (FALSE)?
 #'
 #' @return a data frame with columns `response_id`, `grna_group`, `p_value`, and `log_fold_change`.
 #' @export
@@ -43,7 +43,7 @@
 #' grna_group_column_name <- "target"
 #' B <- 2500
 #' side <- "both"
-#' full_output <- FALSE
+#' output_amount <- 1
 #'
 #' # call the function
 #' result <- run_sceptre_low_moi(mm_odm,
@@ -54,7 +54,7 @@
 #' grna_group_column_name,
 #' B,
 #' side,
-#' full_output)
+#' output_amount)
 #' }
 run_sceptre_low_moi <- function(mm_odm,
                                 response_grna_group_pairs,
@@ -64,12 +64,13 @@ run_sceptre_low_moi <- function(mm_odm,
                                 grna_group_column_name = "grna_group",
                                 B = 2500,
                                 side = "both",
-                                full_output = FALSE) {
+                                output_amount = 1) {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
   # step 1: check inputs; get the unique responses
   cat("Checking inputs. ")
+  if (!output_amount %in% c(1, 2, 3)) stop("output_amount not recognized.")
   mm_odm <- check_ondisc_inputs(mm_odm = mm_odm,
                                 response_grna_group_pairs = response_grna_group_pairs,
                                 form = form,
@@ -90,7 +91,7 @@ run_sceptre_low_moi <- function(mm_odm,
                                                  grna_group_info = grna_group_info,
                                                  response_grna_group_pairs = response_grna_group_pairs,
                                                  B = B,
-                                                 full_output = full_output,
+                                                 output_amount = output_amount,
                                                  side = side)
   return(results)
 }

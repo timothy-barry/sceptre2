@@ -13,7 +13,7 @@ run_sceptre_low_moi(
   grna_group_column_name = "grna_group",
   B = 2500,
   side = "both",
-  full_output = FALSE
+  output_amount = 1
 )
 }
 \arguments{
@@ -33,7 +33,7 @@ run_sceptre_low_moi(
 
 \item{side}{sidedness of the test (one of "left", "both", and "right")}
 
-\item{full_output}{return the full output (TRUE) or a simplified, reduced output (FALSE)?}
+\item{output_amount}{return the full output (TRUE) or a simplified, reduced output (FALSE)?}
 }
 \value{
 a data frame with columns \code{response_id}, \code{grna_group}, \code{p_value}, and \code{log_fold_change}.
@@ -69,7 +69,7 @@ grna_modality_name <- "grna_expression"
 grna_group_column_name <- "target"
 B <- 2500
 side <- "both"
-full_output <- FALSE
+output_amount <- 1
 
 # call the function
 result <- run_sceptre_low_moi(mm_odm,
@@ -80,6 +80,6 @@ grna_modality_name,
 grna_group_column_name,
 B,
 side,
-full_output)
+output_amount)
 }
 }

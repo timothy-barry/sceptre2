@@ -1,4 +1,4 @@
-perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, full_output, side) {
+perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, output_amount, side) {
   # obtain response odm
   response_odm <- mm_odm |> ondisc::get_modality("response")
 
@@ -30,7 +30,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
       dplyr::pull(grna_group) |>
       as.character()
 
-    x <- sapply(X = grna_groups, FUN = function(grna_group) {
+    lapply(X = grna_groups, FUN = function(grna_group) {
       print(paste0("Working on response ", response_id, " and gRNA group ", grna_group, "."))
       # initial grna group-specific vectors and values
       n_cells_curr_grna_group <- grna_group_info[["n_cells_per_grna"]][[grna_group]]
@@ -56,20 +56,18 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
                                        ground_truth_treatment_idxs = ground_truth_treatment_idxs,
                                        synthetic_treatment_idxs = synthetic_treatment_idxs,
                                        response_theta = response_theta,
-                                       side = side,
-                                       full_output = full_output)
+                                       side = side)
 
       prepare_output(permutation_runs = perm_out$permutation_runs,
                      null_dist_fit = perm_out$null_dist_fit,
                      p_value = perm_out$p_value,
                      contingency_table = contingency_table,
                      side = side,
-                     precomp_backup = response_precomp$backup,
                      n_covariates = ncol(global_cell_covariates),
                      precomp_str = response_precomp$precomp_str,
-                     full_output = 2)
-
-    }) |> t() |> data.table::as.data.table() |> dplyr::mutate(grna_group = grna_groups,
-                                                              response_id = response_id)
+                     output_amount = output_amount) |>
+        dplyr::mutate(grna_group = grna_group, response_id = response_id) |>
+        data.table::as.data.table()
+    }) |> data.table::rbindlist()
   }) |> data.table::rbindlist()
 }
