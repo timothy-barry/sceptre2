@@ -65,6 +65,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
                      side = side,
                      n_covariates = ncol(global_cell_covariates),
                      precomp_str = response_precomp$precomp_str,
+                     B = B,
                      output_amount = output_amount) |>
         dplyr::mutate(grna_group = grna_group, response_id = response_id) |>
         data.table::as.data.table()
