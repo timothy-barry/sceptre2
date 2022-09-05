@@ -4,7 +4,7 @@
 \alias{plot_fitted_density}
 \title{Plot fitted density}
 \usage{
-plot_fitted_density(dp, z_null, distribution, z_star = NULL)
+plot_fitted_density(dp, z_null, distribution, z_star = NULL, legend = TRUE)
 }
 \arguments{
 \item{dp}{vector of fitted skew-normal or skew-t parameters}

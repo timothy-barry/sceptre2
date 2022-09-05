@@ -57,14 +57,14 @@ compute_nb_test_stat <- function(y, mu, response_theta) {
 }
 
 
-prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency_table, side, n_covariates, precomp_str, B, output_amount) {
+prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency_table, side, n_covariates, precomp_str, B, model_fit_p, output_amount) {
   # basic output: z_value, log_fold_change, p_value
   output <- data.frame(z_value = permutation_runs$z_star,
                        log_fold_change = permutation_runs$log_fold_change,
                        p_value = p_value)
 
   # intermediate output: ks_fit, empirical p-value, contingency table, fit information
-  if (output_amount == 2) {
+  if (output_amount >= 2) {
     ks_fit <- compute_ks_test(z_null = permutation_runs$z_null,
                               dp = null_dist_fit$dp,
                               distribution = "SN")
@@ -79,11 +79,12 @@ prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency
                                        n_iterations = null_dist_fit$n_iterations,
                                        convergence = null_dist_fit$convergence,
                                        B = B,
+                                       model_fit_p = model_fit_p,
                                        precomp_summary = factor(precomp_str)))
   }
 
   # maximum output: resampled test statistics
-  if (output_amount == 3) {
+  if (output_amount >= 3) {
     resampled_stats <- stats::setNames(permutation_runs$z_null,
                                        paste0("z_null_", seq(1, length(permutation_runs$z_null))))
 

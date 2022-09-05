@@ -17,30 +17,7 @@ get_grna_group_info <- function(grna_group_assignments) {
 }
 
 
-compute_empirical_p_value_result_row <- function(row, side = "both") {
-  z_null <- as.numeric(row[, grepl(pattern = "z_null_*", x = names(row))])
-  z_star <- as.numeric(row[,"z_value"])
-  compute_empirical_p_value(z_star, z_null, side)
-}
-
-
-compute_ks_test_result_row <- function(row) {
-  z_null <- as.numeric(row[,grepl(pattern = "z_null_*", x = names(row))])
-  dp <- row |>
-    dplyr::select_if(names(row) %in% c("xi", "omega", "alpha", "nu"))  |>
-    as.numeric()
-  distribution <- if (length(dp) == 4) "ST" else "SN"
-  if (distribution == "SN") {
-    cdf <- function(x) sn::psn(x = x, dp = dp)
-    ret <- stats::ks.test(x = z_null, y = cdf)
-  } else {
-    stop("ST not yet implemented.")
-  }
-  return(ret)
-}
-
-
-plot_fitted_density_result_row <- function(row) {
+plot_fitted_density_result_row <- function(row, legend = TRUE) {
   z_null <- as.numeric(row[,grepl(pattern = "z_null_*", x = names(row))])
   z_star <- as.numeric(row[,"z_value"])
   dp <- row |>
@@ -48,6 +25,8 @@ plot_fitted_density_result_row <- function(row) {
     as.numeric()
   distribution <- if (length(dp) == 4) "ST" else "SN"
   p_out <- plot_fitted_density(dp = dp, z_null = z_null,
-                               distribution = distribution, z_star = z_star)
+                               distribution = distribution,
+                               z_star = z_star,
+                               legend = legend)
   return(p_out)
 }

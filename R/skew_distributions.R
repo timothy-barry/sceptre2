@@ -119,7 +119,7 @@ compute_ks_test <- function(z_null, dp, distribution) {
 #' @param z_star (optional) ground truth test statistic
 #'
 #' @return a ggplot object
-plot_fitted_density <- function(dp, z_null, distribution, z_star = NULL) {
+plot_fitted_density <- function(dp, z_null, distribution, z_star = NULL, legend = TRUE) {
   interval <- range(c(z_null, z_star)) + c(-0.25, 0.25)
   z <- seq(interval[1], interval[2], length.out = 1000)
   if (distribution == "ST") {
@@ -144,7 +144,7 @@ plot_fitted_density <- function(dp, z_null, distribution, z_star = NULL) {
     ggplot2::scale_y_continuous(expand = c(0, 0)) +
     ggplot2::theme_bw() + ggplot2::xlab("") +
     (if (is.null(z_star)) NULL else ggplot2::geom_vline(xintercept = z_star, col = "darkred", lwd = 0.7)) +
-    ggplot2::theme(legend.position = c(0.85, 0.8),
+    ggplot2::theme(legend.position = if (legend) c(0.85, 0.8) else "none",
                    legend.background = ggplot2::element_rect(fill = "transparent", colour = NA),
                    plot.title = ggplot2::element_text(hjust = 0.5, size = 11),
                    panel.grid = ggplot2::element_blank(),

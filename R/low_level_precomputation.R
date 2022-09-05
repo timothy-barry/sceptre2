@@ -5,12 +5,17 @@
 #' @param expressions the numeric vector of response expressions
 #' @param covariate_matrix the covariate matrix on which to regress (NOTE: should contain an interecept term)
 #'
-#' @return a named vector of fitted coefficients, alongside the fitted size parameter (named "response_theta")
+#' @return a list containing the following elements:
+#' (i) "precomp_str": a string summarizing the method for fitting the GLM and the size parameter
+#' (ii) "fitted_coefs": a vector of fitted coefficients; the final entry of this vector is the fitted theta
+#' (iii) "model_fit_p": p-value for a test of goodness of fit of the final model
 run_response_precomputation_low_level <- function(expressions, covariate_matrix) {
   # backup: return fitted coefficients from Poisson regression
   backup_3 <- function(pois_fit, pois_warn) {
+    model_fit_p <- stats::pchisq(pois_fit$deviance, df = pois_fit$df.residual, lower.tail = FALSE)
     list(fitted_coef_str = paste0("pois", if (pois_warn) "_(warn)" else NULL),
-         fitted_coefs = stats::coef(pois_fit))
+         fitted_coefs = stats::coef(pois_fit),
+         model_fit_p = model_fit_p)
   }
 
   # Backup: method of moments
@@ -39,9 +44,11 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
 
     # obtain the fitted coefficients
     fitted_coefs_list <- tryCatch({
-      fit_nb <- VGAM::vglm(formula = expressions ~ . + 0, family = VGAM::negbinomial.size(response_theta), data = covariate_matrix)
+      fit_nb <- stats::glm(formula = expressions ~ . + 0, family = MASS::negative.binomial(response_theta), data = covariate_matrix)
+      model_fit_p <- stats::pchisq(fit_nb$deviance, df = fit_nb$df.residual, lower.tail = FALSE)
       list(fitted_coef_str = "nb",
-           fitted_coefs = stats::coef(fit_nb))
+           fitted_coefs = stats::coef(fit_nb),
+           model_fit_p = model_fit_p)
     }, error = function(e) backup_3(pois_fit, pois_warn), warning = function(w) backup_3(pois_fit, pois_warn))
     fitted_coefs <- fitted_coefs_list$fitted_coefs
     precomp <- c(fitted_coefs, response_theta = response_theta)
@@ -51,16 +58,19 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
     precomp_str <- paste0(fitted_coef_str, ":", theta_fit_str)
 
     list(precomp_str = precomp_str,
-                precomp = c(fitted_coefs, response_theta = response_theta))
+         precomp = c(fitted_coefs, response_theta = response_theta),
+         model_fit_p = model_fit_p)
   }
 
   # try to fit a negative binomial GLM with unknown dispersion
   result <- tryCatch({
-    fit_nb_init <- MASS::glm.nb(formula = expressions ~ . + 0, data = covariate_matrix)
+    fit_nb <- MASS::glm.nb(formula = expressions ~ . + 0, data = covariate_matrix)
     response_theta <- min(max(fit_nb_init$theta, 0.1), 1000)
-    fit_nb <- VGAM::vglm(formula = expressions ~ . + 0, family = VGAM::negbinomial.size(response_theta), data = covariate_matrix)
     fitted_coefs <- stats::coef(fit_nb)
-    list(precomp_str = "nb:mass", precomp = c(fitted_coefs, response_theta = response_theta))
+    model_fit_p <- stats::pchisq(fit_nb$deviance, df = fit_nb$df.residual, lower.tail = FALSE)
+    list(precomp_str = "nb:mass",
+         precomp = c(fitted_coefs, response_theta = response_theta),
+         model_fit_p = model_fit_p)
   }, error = function(e) backup(), warning = function(w) backup())
 
   return(result)

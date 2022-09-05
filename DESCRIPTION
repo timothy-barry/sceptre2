@@ -18,6 +18,5 @@ Imports:
     MASS,
     ondisc,
     sn,
-    tidyr,
-    VGAM
+    tidyr
 Remotes: timothy-barry/ondisc
