@@ -12,10 +12,8 @@
 run_response_precomputation_low_level <- function(expressions, covariate_matrix) {
   # backup: return fitted coefficients from Poisson regression
   backup_3 <- function(pois_fit, pois_warn) {
-    model_fit_p <- stats::pchisq(pois_fit$deviance, df = pois_fit$df.residual, lower.tail = FALSE)
     list(fitted_coef_str = paste0("pois", if (pois_warn) "_(warn)" else NULL),
-         fitted_coefs = stats::coef(pois_fit),
-         model_fit_p = model_fit_p)
+         fitted_coefs = stats::coef(pois_fit))
   }
 
   # Backup: method of moments
@@ -45,10 +43,8 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
     # obtain the fitted coefficients
     fitted_coefs_list <- tryCatch({
       fit_nb <- stats::glm(formula = expressions ~ . + 0, family = MASS::negative.binomial(response_theta), data = covariate_matrix)
-      model_fit_p <- stats::pchisq(fit_nb$deviance, df = fit_nb$df.residual, lower.tail = FALSE)
       list(fitted_coef_str = "nb",
-           fitted_coefs = stats::coef(fit_nb),
-           model_fit_p = model_fit_p)
+           fitted_coefs = stats::coef(fit_nb))
     }, error = function(e) backup_3(pois_fit, pois_warn), warning = function(w) backup_3(pois_fit, pois_warn))
     fitted_coefs <- fitted_coefs_list$fitted_coefs
     precomp <- c(fitted_coefs, response_theta = response_theta)
@@ -58,8 +54,7 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
     precomp_str <- paste0(fitted_coef_str, ":", theta_fit_str)
 
     list(precomp_str = precomp_str,
-         precomp = c(fitted_coefs, response_theta = response_theta),
-         model_fit_p = model_fit_p)
+         precomp = c(fitted_coefs, response_theta = response_theta))
   }
 
   # try to fit a negative binomial GLM with unknown dispersion
@@ -67,10 +62,8 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
     fit_nb <- MASS::glm.nb(formula = expressions ~ . + 0, data = covariate_matrix)
     response_theta <- min(max(fit_nb_init$theta, 0.1), 1000)
     fitted_coefs <- stats::coef(fit_nb)
-    model_fit_p <- stats::pchisq(fit_nb$deviance, df = fit_nb$df.residual, lower.tail = FALSE)
     list(precomp_str = "nb:mass",
-         precomp = c(fitted_coefs, response_theta = response_theta),
-         model_fit_p = model_fit_p)
+         precomp = c(fitted_coefs, response_theta = response_theta))
   }, error = function(e) backup(), warning = function(w) backup())
 
   return(result)
