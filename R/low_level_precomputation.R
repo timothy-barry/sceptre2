@@ -8,7 +8,6 @@
 #' @return a list containing the following elements:
 #' (i) "precomp_str": a string summarizing the method for fitting the GLM and the size parameter
 #' (ii) "fitted_coefs": a vector of fitted coefficients; the final entry of this vector is the fitted theta
-#' (iii) "model_fit_p": p-value for a test of goodness of fit of the final model
 run_response_precomputation_low_level <- function(expressions, covariate_matrix) {
   # backup: return fitted coefficients from Poisson regression
   backup_3 <- function(pois_fit, pois_warn) {
