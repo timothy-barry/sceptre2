@@ -17,7 +17,7 @@ get_grna_group_info <- function(grna_group_assignments) {
 }
 
 
-plot_fitted_density_result_row <- function(row, legend = TRUE) {
+plot_fitted_density_result_row <- function(row, n_bins = 15, legend = TRUE) {
   z_null <- as.numeric(row[,grepl(pattern = "z_null_*", x = names(row))])
   z_star <- as.numeric(row[,"z_value"])
   dp <- row |>
@@ -27,6 +27,7 @@ plot_fitted_density_result_row <- function(row, legend = TRUE) {
   p_out <- plot_fitted_density(dp = dp, z_null = z_null,
                                distribution = distribution,
                                z_star = z_star,
-                               legend = legend)
+                               legend = legend,
+                               n_bins = n_bins)
   return(p_out)
 }

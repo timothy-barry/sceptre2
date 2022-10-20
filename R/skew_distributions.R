@@ -119,7 +119,7 @@ compute_ks_test <- function(z_null, dp, distribution) {
 #' @param z_star (optional) ground truth test statistic
 #'
 #' @return a ggplot object
-plot_fitted_density <- function(dp, z_null, distribution, z_star = NULL, legend = TRUE) {
+plot_fitted_density <- function(dp, z_null, distribution, z_star = NULL, legend = TRUE, n_bins = 15) {
   interval <- range(c(z_null, z_star)) + c(-0.25, 0.25)
   z <- seq(interval[1], interval[2], length.out = 1000)
   if (distribution == "ST") {
@@ -137,7 +137,7 @@ plot_fitted_density <- function(dp, z_null, distribution, z_star = NULL, legend 
   p <- ggplot2::ggplot() +
     ggplot2::geom_histogram(ggplot2::aes(x = z, y = ..density..),
                             data = data.frame(z = z_null),
-                            boundary = 0, colour = "black", fill = "lightgray", bins = 15) +
+                            boundary = 0, colour = "black", fill = "lightgray", bins = n_bins) +
     ggplot2::geom_line(ggplot2::aes(x = z, y = y, group = curve, colour = curve, linetype = curve), data = df_curves) +
     ggplot2::scale_colour_manual(values = c("darkorchid2", "black"), name = "Null distribution") +
     ggplot2::scale_linetype_manual(values = c("solid", "dashed"), name = "Null distribution") +
