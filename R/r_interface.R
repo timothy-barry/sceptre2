@@ -20,6 +20,10 @@
 #' # load ondisc
 #' library(ondisc)
 #'
+#' #########################
+#' # EXAMPLE ON TAP-SEQ DATA
+#' #########################
+#'
 #' # set the tap seq dir
 #' tap_seq_dir <- paste0(.get_config_path("LOCAL_SCEPTRE2_DATA_DIR"),
 #' "data/schraivogel/ground_truth_tapseq/")
@@ -55,6 +59,48 @@
 #' B,
 #' side,
 #' output_amount)
+#'
+#' ##########################
+#' # EXAMPLE ON FRANGIEH DATA
+#' ##########################
+#' frangieh_dir <- paste0(.get_config_path("LOCAL_SCEPTRE2_DATA_DIR"),
+#' "data/frangieh/co_culture/")
+#'
+#' # obtain the multimodal odm
+#' mm_fp <- paste0(frangieh_dir, "multimodal_metadata.rds")
+#' odm_fps <- paste0(frangieh_dir, c("gene/matrix.odm", "grna_assignment/matrix.odm"))
+#' mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp = mm_fp)
+#'
+#' response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
+#' get_modality("gene") |>
+#' get_feature_ids() |>
+#' sample(5),
+#' grna_group = mm_odm |>
+#' get_modality("grna_assignment") |>
+#' get_feature_covariates() |>
+#' dplyr::pull(target) |>
+#' sample(1))
+#'
+#' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
+#' response_modality_name <- "gene"
+#' grna_modality_name <- "grna_assignment"
+#' grna_group_column_name <- "target"
+#' B <- 250000
+#' side <- "both"
+#' output_amount <- 1
+#' sn_approx <- FALSE
+#'
+#' # call the function
+#' result <- run_sceptre_low_moi(mm_odm,
+#'                              response_grna_group_pairs,
+#'                              form,
+#'                              response_modality_name,
+#'                              grna_modality_name,
+#'                              grna_group_column_name,
+#'                              B,
+#'                              side,
+#'                              output_amount,
+#'                              sn_approx)
 #' }
 run_sceptre_low_moi <- function(mm_odm,
                                 response_grna_group_pairs,
@@ -64,7 +110,8 @@ run_sceptre_low_moi <- function(mm_odm,
                                 grna_group_column_name = "grna_group",
                                 B = 2500,
                                 side = "both",
-                                output_amount = 1) {
+                                output_amount = 1,
+                                sn_approx = TRUE) {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
@@ -82,7 +129,9 @@ run_sceptre_low_moi <- function(mm_odm,
 
   # step 2: assign gRNAs to cells (REWRITE TO ELIMINATE DEP ON LOWMOI AND IMPROVE MEM EFFICIENCY)
   cat("Obtaining the cell-to-gRNA assignments.")
-  grna_group_info <- lowmoi::get_target_assignments_via_max_op(grna_odm) |> get_grna_group_info()
+  input_grna_groups <- as.character(unique(response_grna_group_pairs$grna_group))
+  grna_group_assignments <- grna_group_info <- lowmoi::get_target_assignments_via_max_op(grna_odm)
+  grna_group_info <- get_grna_group_info(grna_group_assignments, input_grna_groups, B)
   rm(grna_odm)
   cat(crayon::green(' \u2713\n'))
 
@@ -92,6 +141,7 @@ run_sceptre_low_moi <- function(mm_odm,
                                                  response_grna_group_pairs = response_grna_group_pairs,
                                                  B = B,
                                                  output_amount = output_amount,
-                                                 side = side)
+                                                 side = side,
+                                                 sn_approx = sn_approx)
   return(results)
 }

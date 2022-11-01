@@ -1,4 +1,4 @@
-perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, output_amount, side) {
+perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, output_amount, side, sn_approx) {
   # obtain response odm
   response_odm <- mm_odm |> ondisc::get_modality("response")
 
@@ -36,11 +36,7 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
       n_cells_curr_grna_group <- grna_group_info[["n_cells_per_grna"]][[grna_group]]
       subset_vect <- c(grna_group_info[["grna_specific_idxs"]][[grna_group]],
                        grna_group_info[["grna_specific_idxs"]][["non-targeting"]])
-      n_cells_curr_de <- n_cells_curr_grna_group + grna_group_info[["n_cells_per_grna"]][["non-targeting"]]
-
-      # generate synthetic indexes
-      set.seed(4)
-      synthetic_treatment_idxs <- replicate(n = B, expr = sample.int(n = n_cells_curr_de, size = n_cells_curr_grna_group))
+      synthetic_treatment_idxs <- grna_group_info[["permutation_idxs"]][[grna_group]]
 
       # obtain vectors to pass to permutation test
       curr_expressions <- expressions[subset_vect]
@@ -51,22 +47,34 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
       contingency_table <- get_contingency_table(curr_expressions, ground_truth_treatment_idxs)
 
       # call the low-level association test function
-      perm_out <- run_permutation_test(expressions = curr_expressions,
-                                       fitted_means = curr_fitted_means,
-                                       ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                       synthetic_treatment_idxs = synthetic_treatment_idxs,
-                                       response_theta = response_theta,
-                                       side = side)
+      perm_runs <- run_permutations(expressions = curr_expressions,
+                                    fitted_means = curr_fitted_means,
+                                    ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                    synthetic_treatment_idxs = synthetic_treatment_idxs,
+                                    response_theta = response_theta)
 
-      prepare_output(permutation_runs = perm_out$permutation_runs,
-                     null_dist_fit = perm_out$null_dist_fit,
-                     p_value = perm_out$p_value,
-                     contingency_table = contingency_table,
-                     side = side,
-                     n_covariates = ncol(global_cell_covariates),
-                     precomp_str = response_precomp$precomp_str,
-                     B = B,
-                     output_amount = output_amount) |>
+      out <- if (sn_approx) {
+        null_dist_fit <- fit_skew_normal(y = perm_runs$z_null)
+        p_value <- compute_skew_normal_p_value(dp = null_dist_fit$dp,
+                                               z_star = perm_runs$z_star, side = side)
+        prepare_output(permutation_runs = perm_runs,
+                       null_dist_fit = null_dist_fit,
+                       p_value = p_value,
+                       contingency_table = contingency_table,
+                       side = side,
+                       n_covariates = ncol(global_cell_covariates),
+                       precomp_str = response_precomp$precomp_str,
+                       B = B,
+                       output_amount = output_amount)
+      } else {
+        p_value <- compute_empirical_p_value(z_star = perm_runs$z_star,
+                                             z_null = perm_runs$z_null,
+                                             side = side)
+        data.frame(z_value = perm_runs$z_star,
+                   log_fold_change = perm_runs$log_fold_change,
+                   p_value = p_value)
+      }
+      out |>
         dplyr::mutate(grna_group = grna_group, response_id = response_id) |>
         data.table::as.data.table()
     }) |> data.table::rbindlist()

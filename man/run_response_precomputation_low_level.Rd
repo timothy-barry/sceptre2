@@ -15,7 +15,6 @@ run_response_precomputation_low_level(expressions, covariate_matrix)
 a list containing the following elements:
 (i) "precomp_str": a string summarizing the method for fitting the GLM and the size parameter
 (ii) "fitted_coefs": a vector of fitted coefficients; the final entry of this vector is the fitted theta
-(iii) "model_fit_p": p-value for a test of goodness of fit of the final model
 }
 \description{
 Runs precomputation on a response
