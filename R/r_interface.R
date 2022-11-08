@@ -130,7 +130,7 @@ run_sceptre_low_moi <- function(mm_odm,
   # step 2: assign gRNAs to cells (REWRITE TO ELIMINATE DEP ON LOWMOI AND IMPROVE MEM EFFICIENCY)
   cat("Obtaining the cell-to-gRNA assignments.")
   input_grna_groups <- as.character(unique(response_grna_group_pairs$grna_group))
-  grna_group_assignments <- grna_group_info <- lowmoi::get_target_assignments_via_max_op(grna_odm)
+  grna_group_assignments <- lowmoi::get_target_assignments_via_max_op(grna_odm)
   grna_group_info <- get_grna_group_info(grna_group_assignments, input_grna_groups, B)
   rm(grna_odm)
   cat(crayon::green(' \u2713\n'))
