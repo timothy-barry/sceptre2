@@ -36,8 +36,9 @@ perform_association_test_lowmoi_odm <- function(mm_odm, grna_group_info, respons
       n_cells_curr_grna_group <- grna_group_info[["n_cells_per_grna"]][[grna_group]]
       subset_vect <- c(grna_group_info[["grna_specific_idxs"]][[grna_group]],
                        grna_group_info[["grna_specific_idxs"]][["non-targeting"]])
-      synthetic_treatment_idxs <- grna_group_info[["permutation_idxs"]][[grna_group]]
-
+      synthetic_treatment_idxs <- get_grna_permutation_idxs(grna_group_info[["n_cells_per_grna"]],
+                                                            grna_group,
+                                                            B)
       # obtain vectors to pass to permutation test
       curr_expressions <- expressions[subset_vect]
       curr_fitted_means <- fitted_means[subset_vect]

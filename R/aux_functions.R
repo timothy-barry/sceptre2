@@ -6,7 +6,6 @@
 #'
 #' @return a list containing (i) the indexes of the cells to which each gRNA belongs, and (ii) the number of cells in which each gRNA belongs
 get_grna_group_info <- function(grna_group_assignments, input_grna_groups, B) {
-  set.seed(4)
   unique_grnas <- c(input_grna_groups |> stats::setNames(input_grna_groups),
                     "non-targeting" = "non-targeting")
   # get the indices of each gRNA
@@ -15,18 +14,18 @@ get_grna_group_info <- function(grna_group_assignments, input_grna_groups, B) {
    })
   # get the number of cells per gRNA; also record the number of NT cells
   n_cells_per_grna <- table(grna_group_assignments)[unique_grnas]
-  n_nt_cells <- n_cells_per_grna[["non-targeting"]]
-  # generate the permutation indexes for each gRNA
-  unique_grnas <- unique_grnas[unique_grnas != "non-targeting"]
-  permutation_idxs <- lapply(unique_grnas, function(unique_grna) {
-    n_cells_curr_grna_group <- n_cells_per_grna[[unique_grna]]
-    n_cells_curr_de <- n_cells_curr_grna_group + n_nt_cells
-    synthetic_treatment_idxs <- replicate(n = B, expr = sample.int(n = n_cells_curr_de,
-                                          size = n_cells_curr_grna_group))
-  })
   return(list(grna_specific_idxs = grna_specific_idxs,
-              n_cells_per_grna = n_cells_per_grna,
-              permutation_idxs = permutation_idxs))
+              n_cells_per_grna = n_cells_per_grna))
+}
+
+
+get_grna_permutation_idxs <- function(n_cells_per_grna, unique_grna, B) {
+  set.seed(4)
+  n_nt_cells <- n_cells_per_grna[["non-targeting"]]
+  n_cells_curr_grna_group <- n_cells_per_grna[[unique_grna]]
+  n_cells_curr_de <- n_cells_curr_grna_group + n_nt_cells
+  synthetic_treatment_idxs <- replicate(n = B, expr = sample.int(n = n_cells_curr_de,
+                                                                 size = n_cells_curr_grna_group))
 }
 
 
