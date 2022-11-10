@@ -10,7 +10,7 @@
 #' @param grna_modality_name name of the grna modality (e.g., "grna_expression") within the multimodal ODM
 #' @param grna_group_column_name name of the column within the feature covariate matrix of the gRNA ODM that contains the gRNA groups
 #' @param side sidedness of the test (one of "left", "both", and "right")
-#' @param output_amount return the full output (TRUE) or a simplified, reduced output (FALSE)?
+#' @param output_amount return the full output (2) or a simplified, reduced output (1)?
 #'
 #' @return a data frame with columns `response_id`, `grna_group`, `p_value`, and `log_fold_change`.
 #' @export
@@ -74,12 +74,12 @@
 #' response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 #' get_modality("gene") |>
 #' get_feature_ids() |>
-#' sample(5),
+#' sample(3),
 #' grna_group = mm_odm |>
 #' get_modality("grna_assignment") |>
 #' get_feature_covariates() |>
 #' dplyr::pull(target) |>
-#' sample(1))
+#' sample(2))
 #'
 #' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
 #' response_modality_name <- "gene"
@@ -88,7 +88,6 @@
 #' B <- 250000
 #' side <- "both"
 #' output_amount <- 1
-#' sn_approx <- FALSE
 #'
 #' # call the function
 #' result <- run_sceptre_low_moi(mm_odm,
@@ -99,8 +98,7 @@
 #'                              grna_group_column_name,
 #'                              B,
 #'                              side,
-#'                              output_amount,
-#'                              sn_approx)
+#'                              output_amount)
 #' }
 run_sceptre_low_moi <- function(mm_odm,
                                 response_grna_group_pairs,
@@ -110,8 +108,7 @@ run_sceptre_low_moi <- function(mm_odm,
                                 grna_group_column_name = "grna_group",
                                 B = 2500,
                                 side = "both",
-                                output_amount = 1,
-                                sn_approx = TRUE) {
+                                output_amount = 1) {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
@@ -136,12 +133,11 @@ run_sceptre_low_moi <- function(mm_odm,
   cat(crayon::green(' \u2713\n'))
 
   # step 3: perform the pairwise association test
-  results <- perform_association_test_lowmoi_odm(mm_odm = mm_odm,
-                                                 grna_group_info = grna_group_info,
-                                                 response_grna_group_pairs = response_grna_group_pairs,
-                                                 B = B,
-                                                 output_amount = output_amount,
-                                                 side = side,
-                                                 sn_approx = sn_approx)
+  results <- perform_association_test_lowmoi_odm_v2(mm_odm = mm_odm,
+                                                    grna_group_info = grna_group_info,
+                                                    response_grna_group_pairs = response_grna_group_pairs,
+                                                    B = B,
+                                                    output_amount = output_amount,
+                                                    side = side)
   return(results)
 }

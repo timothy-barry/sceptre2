@@ -13,8 +13,7 @@ run_sceptre_low_moi(
   grna_group_column_name = "grna_group",
   B = 2500,
   side = "both",
-  output_amount = 1,
-  sn_approx = TRUE
+  output_amount = 1
 )
 }
 \arguments{
@@ -34,7 +33,7 @@ run_sceptre_low_moi(
 
 \item{side}{sidedness of the test (one of "left", "both", and "right")}
 
-\item{output_amount}{return the full output (TRUE) or a simplified, reduced output (FALSE)?}
+\item{output_amount}{return the full output (2) or a simplified, reduced output (1)?}
 }
 \value{
 a data frame with columns \code{response_id}, \code{grna_group}, \code{p_value}, and \code{log_fold_change}.
@@ -101,12 +100,12 @@ mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp 
 response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 get_modality("gene") |>
 get_feature_ids() |>
-sample(5),
+sample(3),
 grna_group = mm_odm |>
 get_modality("grna_assignment") |>
 get_feature_covariates() |>
 dplyr::pull(target) |>
-sample(1))
+sample(2))
 
 form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
 response_modality_name <- "gene"
@@ -115,7 +114,6 @@ grna_group_column_name <- "target"
 B <- 250000
 side <- "both"
 output_amount <- 1
-sn_approx <- FALSE
 
 # call the function
 result <- run_sceptre_low_moi(mm_odm,
@@ -126,7 +124,6 @@ result <- run_sceptre_low_moi(mm_odm,
                              grna_group_column_name,
                              B,
                              side,
-                             output_amount,
-                             sn_approx)
+                             output_amount)
 }
 }
