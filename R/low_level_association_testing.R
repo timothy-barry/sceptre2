@@ -55,3 +55,22 @@ compute_nb_test_stat <- function(y, mu, response_theta) {
   z <- (sum_y - sum(top))/sqrt(sum(bottom))
   return(z)
 }
+
+
+run_permutations_v2 <- function(expressions, fitted_means, ground_truth_treatment_idxs, synthetic_treatment_idxs, response_theta) {
+  # compute z star
+  a <- expressions - (expressions * fitted_means + response_theta * fitted_means)/(response_theta + fitted_means)
+  b <- (response_theta * fitted_means)/(response_theta + fitted_means)
+  z_star <- sum(a[ground_truth_treatment_idxs])/sqrt(sum(b[ground_truth_treatment_idxs]))
+
+  # compute LFC
+  y <- expressions[ground_truth_treatment_idxs]
+  mu <- fitted_means[ground_truth_treatment_idxs]
+  log_fold_change <- log(mean(y)) - log(mean(mu))
+
+  # compute the z nulls
+  z_null <- compute_resampled_statistics(a, b, synthetic_treatment_idxs)
+
+  # return list
+  return(list(z_star = z_star, z_null = z_null, log_fold_change = log_fold_change))
+}

@@ -35,6 +35,7 @@ perform_association_test_lowmoi_odm_v2 <- function(mm_odm, grna_group_info, resp
       dplyr::filter(grna_group == !!grna_group) |>
       dplyr::pull(response_id) |>
       as.character()
+
     lapply(X = response_ids, FUN = function(response_id) {
       # print message
       print(paste0("Working on gene ", response_id, " and gRNA group ", grna_group, "."))
@@ -54,11 +55,11 @@ perform_association_test_lowmoi_odm_v2 <- function(mm_odm, grna_group_info, resp
       ground_truth_treatment_idxs <- seq(1, n_cells_curr_grna_group)
 
       # call the low-level association test function
-      perm_runs <- run_permutations(expressions = curr_expressions,
-                                    fitted_means = curr_fitted_means,
-                                    ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                    synthetic_treatment_idxs = synthetic_treatment_idxs,
-                                    response_theta = response_theta)
+      perm_runs <- run_permutations_v2(expressions = curr_expressions,
+                                       fitted_means = curr_fitted_means,
+                                       ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                       synthetic_treatment_idxs = synthetic_treatment_idxs,
+                                       response_theta = response_theta)
       # compute the p-value
       p_value <- compute_empirical_p_value(z_star = perm_runs$z_star,
                                            z_null = perm_runs$z_null,

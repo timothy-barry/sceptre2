@@ -9,6 +9,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.0
+LinkingTo: Rcpp
 Imports: 
     crayon,
     data.table,
@@ -18,5 +19,6 @@ Imports:
     MASS,
     ondisc,
     sn,
-    tidyr
+    tidyr,
+    Rcpp
 Remotes: timothy-barry/ondisc
