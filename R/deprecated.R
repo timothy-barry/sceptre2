@@ -95,3 +95,18 @@ prepare_output <- function(permutation_runs, null_dist_fit, p_value, contingency
 
   return(output)
 }
+
+plot_fitted_density_result_row <- function(row, n_bins = 15, legend = TRUE) {
+  z_null <- as.numeric(row[,grepl(pattern = "z_null_*", x = names(row))])
+  z_star <- as.numeric(row[,"z_value"])
+  dp <- row |>
+    dplyr::select_if(names(row) %in% c("xi", "omega", "alpha", "nu"))  |>
+    as.numeric()
+  distribution <- if (length(dp) == 4) "ST" else "SN"
+  p_out <- plot_fitted_density(dp = dp, z_null = z_null,
+                               distribution = distribution,
+                               z_star = z_star,
+                               legend = legend,
+                               n_bins = n_bins)
+  return(p_out)
+}

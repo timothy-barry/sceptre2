@@ -13,7 +13,9 @@ run_sceptre_low_moi(
   grna_group_column_name = "grna_group",
   B = 2500,
   side = "both",
-  output_amount = 1
+  output_amount = 1,
+  max_b_per_batch = 250000,
+  ooc = TRUE
 )
 }
 \arguments{
@@ -101,11 +103,7 @@ response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 get_modality("gene") |>
 get_feature_ids() |>
 sample(3),
-grna_group = mm_odm |>
-get_modality("grna_assignment") |>
-get_feature_covariates() |>
-dplyr::pull(target) |>
-sample(2))
+grna_group = c("LGALS3", "CDKN1A"))
 
 form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
 response_modality_name <- "gene"

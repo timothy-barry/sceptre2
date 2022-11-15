@@ -68,25 +68,6 @@ compute_skew_normal_p_value <- function(dp, z_star, side) {
 }
 
 
-#' Compute empirical p-value
-#'
-#' Computes an empirical permutation test p-value.
-#'
-#' @param z_star ground truth test statistic
-#' @param z_null the null test statistics
-#' @param side side of the tests
-#'
-#' @return the empirical p-value
-compute_empirical_p_value <- function(z_star, z_null, side) {
-  out_p <- switch(side,
-                  "left" = mean(c(-Inf, z_null) <= z_star),
-                  "right" = mean(c(Inf, z_null) >= z_star),
-                  "both" = 2 * min(mean(c(-Inf, z_null) <= z_star),
-                                   mean(c(Inf, z_null) >= z_star)))
-  return(out_p)
-}
-
-
 #' Compute KS test
 #'
 #' Runs a KS test on the resampled test statistics

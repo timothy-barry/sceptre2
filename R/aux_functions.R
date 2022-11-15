@@ -19,8 +19,16 @@ get_grna_group_info <- function(grna_group_assignments, input_grna_groups, B) {
 }
 
 
+#' Get gRNA permutation indices
+#'
+#' Obtains the matrix of permutation indices for a given gRNA and choice of B
+#'
+#' @param n_cells_per_grna the "n_cells_per_grna" table of the grna_group_info list
+#' @param unique_grna a gRNA
+#' @param B the number of resamples to draw
+#'
+#' @return a matrix of permutation indices
 get_grna_permutation_idxs <- function(n_cells_per_grna, unique_grna, B) {
-  set.seed(4)
   n_nt_cells <- n_cells_per_grna[["non-targeting"]]
   n_cells_curr_grna_group <- n_cells_per_grna[[unique_grna]]
   n_cells_curr_de <- n_cells_curr_grna_group + n_nt_cells
@@ -29,17 +37,37 @@ get_grna_permutation_idxs <- function(n_cells_per_grna, unique_grna, B) {
 }
 
 
-plot_fitted_density_result_row <- function(row, n_bins = 15, legend = TRUE) {
-  z_null <- as.numeric(row[,grepl(pattern = "z_null_*", x = names(row))])
-  z_star <- as.numeric(row[,"z_value"])
-  dp <- row |>
-    dplyr::select_if(names(row) %in% c("xi", "omega", "alpha", "nu"))  |>
-    as.numeric()
-  distribution <- if (length(dp) == 4) "ST" else "SN"
-  p_out <- plot_fitted_density(dp = dp, z_null = z_null,
-                               distribution = distribution,
-                               z_star = z_star,
-                               legend = legend,
-                               n_bins = n_bins)
-  return(p_out)
+#' Compute empirical p-value
+#'
+#' Computes an empirical permutation test p-value.
+#'
+#' @param z_star ground truth test statistic
+#' @param z_null the null test statistics
+#' @param side side of the tests
+#'
+#' @return the empirical p-value
+compute_empirical_p_value <- function(z_star, z_null, side) {
+  out_p <- switch(side,
+                  "left" = mean(c(-Inf, z_null) <= z_star),
+                  "right" = mean(c(Inf, z_null) > z_star),
+                  "both" = 2 * min(mean(c(-Inf, z_null) <= z_star),
+                                   mean(c(Inf, z_null) > z_star)))
+  return(out_p)
+}
+
+
+#' Compute empirical p-value from gRNA-wise resul
+#'
+#' @param grna_wise_result data table giving the number of test statistics falling to the left of the original test statistic across batches (with genes in columns and rows in batches)
+#' @param B total number of resamples
+#' @param side sidedness of the test
+#'
+#' @return a vector of gene-wise p-values
+compute_empirical_p_value_from_batch_result <- function(grna_wise_result, B, side) {
+  left_tailed_p <- (apply(grna_wise_result, 2, sum) + 1)/B
+  switch(side,
+         "left" = left_tailed_p,
+         "right" = 1 - left_tailed_p,
+         "both" = 2 * pmin(left_tailed_p, 1 - left_tailed_p))
+
 }

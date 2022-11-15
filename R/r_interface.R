@@ -75,11 +75,7 @@
 #' get_modality("gene") |>
 #' get_feature_ids() |>
 #' sample(3),
-#' grna_group = mm_odm |>
-#' get_modality("grna_assignment") |>
-#' get_feature_covariates() |>
-#' dplyr::pull(target) |>
-#' sample(2))
+#' grna_group = c("LGALS3", "CDKN1A"))
 #'
 #' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
 #' response_modality_name <- "gene"
@@ -108,7 +104,8 @@ run_sceptre_low_moi <- function(mm_odm,
                                 grna_group_column_name = "grna_group",
                                 B = 2500,
                                 side = "both",
-                                output_amount = 1) {
+                                output_amount = 1,
+                                max_b_per_batch = 250000) {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
@@ -133,11 +130,12 @@ run_sceptre_low_moi <- function(mm_odm,
   cat(crayon::green(' \u2713\n'))
 
   # step 3: perform the pairwise association test
-  results <- perform_association_test_lowmoi_odm_v2(mm_odm = mm_odm,
+  results <- perform_association_test_lowmoi_odm_v3(mm_odm = mm_odm,
                                                     grna_group_info = grna_group_info,
                                                     response_grna_group_pairs = response_grna_group_pairs,
                                                     B = B,
                                                     output_amount = output_amount,
-                                                    side = side)
+                                                    side = side,
+                                                    max_b_per_batch = max_b_per_batch)
   return(results)
 }
