@@ -74,14 +74,14 @@
 #' response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 #' get_modality("gene") |>
 #' get_feature_ids() |>
-#' sample(3),
-#' grna_group = c("LGALS3", "CDKN1A"))
+#' sample(50),
+#' grna_group = c("CDKN1A"))
 #'
 #' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
 #' response_modality_name <- "gene"
 #' grna_modality_name <- "grna_assignment"
 #' grna_group_column_name <- "target"
-#' B <- 250000
+#' B <- 2500000
 #' side <- "both"
 #' output_amount <- 1
 #'
@@ -105,7 +105,8 @@ run_sceptre_low_moi <- function(mm_odm,
                                 B = 2500,
                                 side = "both",
                                 output_amount = 1,
-                                max_b_per_batch = 250000) {
+                                max_b_per_batch = 250000,
+                                in_memory = FALSE) {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
@@ -136,6 +137,7 @@ run_sceptre_low_moi <- function(mm_odm,
                                                     B = B,
                                                     output_amount = output_amount,
                                                     side = side,
-                                                    max_b_per_batch = max_b_per_batch)
+                                                    max_b_per_batch = max_b_per_batch,
+                                                    in_memory = in_memory)
   return(results)
 }

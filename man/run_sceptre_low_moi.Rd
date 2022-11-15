@@ -15,7 +15,7 @@ run_sceptre_low_moi(
   side = "both",
   output_amount = 1,
   max_b_per_batch = 250000,
-  ooc = TRUE
+  in_memory = FALSE
 )
 }
 \arguments{
@@ -102,14 +102,14 @@ mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp 
 response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 get_modality("gene") |>
 get_feature_ids() |>
-sample(3),
-grna_group = c("LGALS3", "CDKN1A"))
+sample(50),
+grna_group = c("CDKN1A"))
 
 form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
 response_modality_name <- "gene"
 grna_modality_name <- "grna_assignment"
 grna_group_column_name <- "target"
-B <- 250000
+B <- 2500000
 side <- "both"
 output_amount <- 1
 
