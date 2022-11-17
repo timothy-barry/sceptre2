@@ -5,7 +5,7 @@
 #' @param grna_group_assignments a vector of cell-to-gRNA assignments
 #'
 #' @return a list containing (i) the indexes of the cells to which each gRNA belongs, and (ii) the number of cells in which each gRNA belongs
-get_grna_group_info <- function(grna_group_assignments, input_grna_groups, B) {
+get_grna_group_info <- function(grna_group_assignments, input_grna_groups) {
   unique_grnas <- c(input_grna_groups |> stats::setNames(input_grna_groups),
                     "non-targeting" = "non-targeting")
   # get the indices of each gRNA

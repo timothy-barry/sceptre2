@@ -126,7 +126,7 @@ run_sceptre_low_moi <- function(mm_odm,
   cat("Obtaining the cell-to-gRNA assignments.")
   input_grna_groups <- as.character(unique(response_grna_group_pairs$grna_group))
   grna_group_assignments <- lowmoi::get_target_assignments_via_max_op(grna_odm)
-  grna_group_info <- get_grna_group_info(grna_group_assignments, input_grna_groups, B)
+  grna_group_info <- get_grna_group_info(grna_group_assignments, input_grna_groups)
   rm(grna_odm)
   cat(crayon::green(' \u2713\n'))
 
