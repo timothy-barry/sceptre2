@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 compute_resampled_statistics <- function(a, b, synthetic_treatment_idxs) {
-    .Call('_sceptre2_compute_resampled_statistics', PACKAGE = 'sceptre2', a, b, synthetic_treatment_idxs)
+    .Call(`_sceptre2_compute_resampled_statistics`, a, b, synthetic_treatment_idxs)
 }
 

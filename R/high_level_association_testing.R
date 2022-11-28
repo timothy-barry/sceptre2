@@ -17,8 +17,8 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
   if (in_memory) {
     # load matrix
     curr_idxs <- unlist(grna_group_info$grna_specific_idxs)
-    gene_exp_mat <- response_odm[[,curr_idxs]] |> as.matrix()
-    rownames(gene_exp_mat) <- ondisc::get_feature_ids(response_odm)
+    gene_exp_mat <- response_odm[[response_ids, curr_idxs]] |> as("RsparseMatrix")
+    rownames(gene_exp_mat) <- response_ids
 
     # update idxs
     grna_names <- names(grna_group_info$grna_specific_idxs)
@@ -108,6 +108,7 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
     colnames(grna_wise_result) <- response_ids
     p_vals <- compute_empirical_p_value_from_batch_result(grna_wise_result = grna_wise_result,
                                                           B = B, side = side)
+    gc()
     data.frame(p_value = p_vals |> stats::setNames(NULL),
                grna_group = factor(grna_group),
                response_id = response_ids |> stats::setNames(NULL) |> factor())

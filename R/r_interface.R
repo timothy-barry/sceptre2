@@ -74,7 +74,7 @@
 #' response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 #' get_modality("gene") |>
 #' get_feature_ids() |>
-#' sample(50),
+#' sample(5),
 #' grna_group = c("CDKN1A"))
 #'
 #' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)

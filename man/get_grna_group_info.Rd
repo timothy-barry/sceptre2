@@ -4,7 +4,7 @@
 \alias{get_grna_group_info}
 \title{Get gRNA index info}
 \usage{
-get_grna_group_info(grna_group_assignments, input_grna_groups, B)
+get_grna_group_info(grna_group_assignments, input_grna_groups)
 }
 \arguments{
 \item{grna_group_assignments}{a vector of cell-to-gRNA assignments}
