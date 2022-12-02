@@ -23,9 +23,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// low_level_score_test_vectorized
+NumericVector low_level_score_test_vectorized(NumericVector a, NumericMatrix B, NumericVector w, IntegerMatrix index_mat);
+RcppExport SEXP _sceptre2_low_level_score_test_vectorized(SEXP aSEXP, SEXP BSEXP, SEXP wSEXP, SEXP index_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type B(BSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type index_mat(index_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(low_level_score_test_vectorized(a, B, w, index_mat));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_sceptre2_compute_resampled_statistics", (DL_FUNC) &_sceptre2_compute_resampled_statistics, 3},
+    {"_sceptre2_low_level_score_test_vectorized", (DL_FUNC) &_sceptre2_low_level_score_test_vectorized, 4},
     {NULL, NULL, 0}
 };
 

@@ -22,3 +22,6 @@ Imports:
     tidyr,
     Rcpp
 Remotes: timothy-barry/ondisc
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

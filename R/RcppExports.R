@@ -5,3 +5,7 @@ compute_resampled_statistics <- function(a, b, synthetic_treatment_idxs) {
     .Call(`_sceptre2_compute_resampled_statistics`, a, b, synthetic_treatment_idxs)
 }
 
+low_level_score_test_vectorized <- function(a, B, w, index_mat) {
+    .Call(`_sceptre2_low_level_score_test_vectorized`, a, B, w, index_mat)
+}
+
