@@ -71,7 +71,8 @@ run_response_precomputation_low_level <- function(expressions, covariate_matrix)
 
 #' Run grna precomputation
 #'
-#' Runs precomputation on a vector of grna indicators
+#' Runs precomputation on a vector of grna indicators.
+#' This function is used for conditional resampling tests only.
 #'
 #' @param indicators the binary vector of grna indicators
 #' @param covariate_matrix the covariate matrix on which to regress (NOTE: should contain an interecept term)
@@ -93,6 +94,7 @@ run_grna_precomputation_low_level <- function(indicators, covariate_matrix) {
 get_pieces_from_response_precomp <- function(response_precomp, global_cell_covariates) {
   response_fitted_coefs <- response_precomp[-length(response_precomp)]
   response_theta <- response_precomp[[length(response_precomp)]]
-  fitted_means <- exp((as.matrix(global_cell_covariates) %*% response_fitted_coefs)[,1])
-  return(list(response_theta = response_theta, fitted_means = fitted_means))
+  mu_hats <- exp(as.numeric((global_cell_covariates %*% response_fitted_coefs)))
+  return(list(response_theta = response_theta,
+              mu_hats = mu_hats))
 }

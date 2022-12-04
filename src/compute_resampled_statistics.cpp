@@ -14,8 +14,8 @@ NumericVector compute_resampled_statistics(NumericVector a, NumericVector b, Int
     bottom = 0;
     for (int i = 0; i < nrow; i++) {
       idx = synthetic_treatment_idxs(i, j);
-      top += a[idx - 1];
-      bottom += b[idx - 1];
+      top += a[idx];
+      bottom += b[idx];
     }
     out[j] = top/sqrt(bottom);
   }

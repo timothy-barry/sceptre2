@@ -15,5 +15,6 @@ run_grna_precomputation_low_level(indicators, covariate_matrix)
 a named vector of fitted coefficients
 }
 \description{
-Runs precomputation on a vector of grna indicators
+Runs precomputation on a vector of grna indicators.
+This function is used for conditional resampling tests only.
 }

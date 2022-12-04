@@ -1,7 +1,7 @@
 #' Run GLM permutation score test
 #'
 #' @param fit a fitted GLM object
-#' @param index_mat a k-by-B matrix of indexes; the indices should be 0-based
+#' @param index_mat a k-by-B matrix of indexes; the indices should be 1-based
 #'
 #' @return a vector of p-values
 #' @examples
@@ -18,22 +18,24 @@
 #' y <- sapply(mus, function(curr_mu) MASS::rnegbin(n = 1, mu = curr_mu, theta = theta))
 #' fit <- glm(y ~ Z + 0, family = MASS::neg.bin(theta))
 #' index_mat <- replicate(n = B,
-#' expr = sample.int(n = length(y), size = 250)) - 1L
+#' expr = sample.int(n = length(y), size = 250))
 #' z_scores <- run_glm_perm_score_test(fit, index_mat)
 #' hist(z_scores, freq = FALSE, ylim  = c(0, dnorm(0)))
 #' xgrid <- seq(-4, 4, 0.01)
-#' y <- dnorm(x = xgrid)
-#' lines(xgrid, y, col = "red")
+#' d_gaus <- dnorm(x = xgrid)
+#' lines(xgrid, d_gaus, col = "red")
 #' ks.test(z_scores, pnorm)
 run_glm_perm_score_test <- function(fit, index_mat) {
-  # first, extract the necessary components from fit -- Z, working_resid, and w
   Z <- fit$model[,-1]
   working_resid <- as.numeric(fit$residuals)
   w <- as.numeric(fit$weights)
-  n <- length(w)
+  run_glm_perm_score_test_with_ingredients(Z, working_resid, w, index_mat - 1L)
+}
 
+
+run_glm_perm_score_test_with_ingredients <- function(Z, working_resid, w, index_mat) {
   # compute Z^T w (to be used throughout)
-  ZtW <- sapply(X = seq(1, n), FUN = function(i) w[i] * Z[i,])
+  ZtW <- sapply(X = seq(1, length(w)), FUN = function(i) w[i] * Z[i,])
 
   # compute the precision matrix P = Z^t W Z
   P <- ZtW %*% Z
@@ -58,6 +60,6 @@ run_glm_perm_score_test <- function(fit, index_mat) {
 
 
 # alternate way of computing B using cholesky decomposition; there does not seem to be a difference
-#R <- chol(P)
-#R_inv_t <- t(backsolve(R, diag(ncol(R))))
-#B <- R_inv_t %*% ZtW
+# R <- chol(P)
+# R_inv_t <- t(backsolve(R, diag(ncol(R))))
+# B <- R_inv_t %*% ZtW

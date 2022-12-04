@@ -1,7 +1,7 @@
 ##########################
 # Loop over random indices
 ##########################
-perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, output_amount, side, max_b_per_batch, in_memory) {
+perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, output_amount, side, max_b_per_batch, in_memory, statistic) {
   # obtain response odm
   response_odm <- mm_odm |> ondisc::get_modality("response")
 
@@ -49,6 +49,9 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
     run_response_precomputation_low_level(expressions = expressions[grna_group_info[["grna_specific_idxs"]][["non-targeting"]]],
                                           covariate_matrix = global_cell_covariates[grna_group_info[["grna_specific_idxs"]][["non-targeting"]],])
   }) |> setNames(response_ids)
+
+  # convert global cell covariates to a matrix
+  global_cell_covariates <- as.matrix(global_cell_covariates)
   # obtain the batch sizes
   batch_bs <- diff(unique(c(seq(from = 0, to = B, by = max_b_per_batch), B)))
 
@@ -71,35 +74,45 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
     grna_wise_result <- lapply(seq_along(batch_bs), function(i) {
       curr_B <- batch_bs[i]
       cat(paste0("\tWorking on batch ", i, " of ", length(batch_bs), "\n"))
-      curr_synthetic_treatment_idxs <- get_grna_permutation_idxs(grna_group_info[["n_cells_per_grna"]], grna_group, curr_B)
+      curr_synthetic_treatment_idxs <- get_grna_permutation_idxs(grna_group_info[["n_cells_per_grna"]], grna_group, curr_B) - 1L
       # loop over the response IDs
       sapply(X = response_ids, FUN = function(response_id) {
         cat(paste0("\t\tWorking on gene ", response_id, "\n"))
         # for the given response id, load the expressions
         if (in_memory) {
-          expressions <- gene_exp_mat[response_id,]
+          expressions <- gene_exp_mat[response_id, subset_vect]
         } else {
-          expressions <- as.numeric(response_odm[[response_id,]])
+          expressions <- as.numeric(response_odm[[response_id, subset_vect]])
         }
+        # next, appropriately subset the global cell covariates
+        curr_global_cell_covariates <- global_cell_covariates[subset_vect,]
 
         # compute the fitted values of the regression
         pieces <- get_pieces_from_response_precomp(response_precomp = gene_precomp_list[[response_id]]$precomp,
-                                                   global_cell_covariates = global_cell_covariates)
+                                                   global_cell_covariates = curr_global_cell_covariates)
         response_theta <- pieces$response_theta
-        fitted_means <- pieces$fitted_means
+        mu_hats <- pieces$mu_hats
 
         # obtain vectors to pass to permutation test
-        curr_expressions <- expressions[subset_vect]
-        curr_fitted_means <- fitted_means[subset_vect]
-        ground_truth_treatment_idxs <- seq(1, n_cells_curr_grna_group)
+        ground_truth_treatment_idxs <- seq(0, n_cells_curr_grna_group - 1L)
 
         # call the low-level association test function
-        perm_runs <- run_permutations_v2(expressions = curr_expressions,
-                                         fitted_means = curr_fitted_means,
-                                         ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                         synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
-                                         response_theta = response_theta)
-
+        if (statistic == "distilled") {
+          perm_runs <- run_permutations_v2(expressions = expressions,
+                                           mu_hats = mu_hats,
+                                           ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                           synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
+                                           response_theta = response_theta)
+        } else if (statistic == "full") {
+          perm_runs <- run_permutations_v3(expressions = expressions,
+                                           mu_hats = mu_hats,
+                                           ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                           synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
+                                           response_theta = response_theta,
+                                           Z = curr_global_cell_covariates)
+        } else {
+          stop("Statistic not recognized.")
+        }
         # return the left sum
         left_sum <- sum(perm_runs$z_null <= perm_runs$z_star)
         left_sum

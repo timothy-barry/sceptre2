@@ -20,46 +20,6 @@
 #' # load ondisc
 #' library(ondisc)
 #'
-#' #########################
-#' # EXAMPLE ON TAP-SEQ DATA
-#' #########################
-#'
-#' # set the tap seq dir
-#' tap_seq_dir <- paste0(.get_config_path("LOCAL_SCEPTRE2_DATA_DIR"),
-#' "data/schraivogel/ground_truth_tapseq/")
-#'
-#' # obtain the multimodal odm
-#' mm_fp <- paste0(tap_seq_dir, "multimodal_metadata.rds")
-#' odm_fps <- paste0(tap_seq_dir, c("gene/matrix.odm", "grna_expression/matrix.odm"))
-#' mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp = mm_fp)
-#'
-#' # set the response grna group pairs
-#' response_grna_group_pairs <- expand.grid(response_id = mm_odm |> get_modality("gene") |>
-#' get_feature_ids() |> sample(3),
-#' grna_group = mm_odm |> get_modality("grna_expression") |>
-#' get_feature_covariates() |> dplyr::pull(target) |> unique()) |>
-#' dplyr::filter(grna_group != "non-targeting")
-#'
-#' # set the arguments to the function
-#' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
-#' response_modality_name <- "gene"
-#' grna_modality_name <- "grna_expression"
-#' grna_group_column_name <- "target"
-#' B <- 2500
-#' side <- "both"
-#' output_amount <- 1
-#'
-#' # call the function
-#' result <- run_sceptre_low_moi(mm_odm,
-#' response_grna_group_pairs,
-#' form,
-#' response_modality_name,
-#' grna_modality_name,
-#' grna_group_column_name,
-#' B,
-#' side,
-#' output_amount)
-#'
 #' ##########################
 #' # EXAMPLE ON FRANGIEH DATA
 #' ##########################
@@ -75,26 +35,33 @@
 #' get_modality("gene") |>
 #' get_feature_ids() |>
 #' sample(5),
-#' grna_group = c("CDKN1A"))
+#' grna_group = c("CDKN1A", "ISYNA1"))
 #'
-#' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
+#' # form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
+#' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis))
 #' response_modality_name <- "gene"
 #' grna_modality_name <- "grna_assignment"
 #' grna_group_column_name <- "target"
-#' B <- 2500000
+#' B <- 250000
 #' side <- "both"
 #' output_amount <- 1
+#' max_b_per_batch <- 250000
+#' in_memory <- TRUE
+#' statistic <- "full"
 #'
 #' # call the function
 #' result <- run_sceptre_low_moi(mm_odm,
-#'                              response_grna_group_pairs,
-#'                              form,
-#'                              response_modality_name,
-#'                              grna_modality_name,
-#'                              grna_group_column_name,
-#'                              B,
-#'                              side,
-#'                              output_amount)
+#'                               response_grna_group_pairs,
+#'                               form,
+#'                               response_modality_name,
+#'                               grna_modality_name,
+#'                               grna_group_column_name,
+#'                               B,
+#'                               side,
+#'                               output_amount,
+#'                               max_b_per_batch,
+#'                               in_memory,
+#'                               statistic)
 #' }
 run_sceptre_low_moi <- function(mm_odm,
                                 response_grna_group_pairs,
@@ -106,7 +73,8 @@ run_sceptre_low_moi <- function(mm_odm,
                                 side = "both",
                                 output_amount = 1,
                                 max_b_per_batch = 250000,
-                                in_memory = FALSE) {
+                                in_memory = TRUE,
+                                statistic = "full") {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
@@ -138,6 +106,7 @@ run_sceptre_low_moi <- function(mm_odm,
                                                     output_amount = output_amount,
                                                     side = side,
                                                     max_b_per_batch = max_b_per_batch,
-                                                    in_memory = in_memory)
+                                                    in_memory = in_memory,
+                                                    statistic = statistic)
   return(results)
 }
