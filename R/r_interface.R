@@ -37,12 +37,11 @@
 #' sample(5),
 #' grna_group = c("CDKN1A", "ISYNA1"))
 #'
-#' # form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis) + batch)
-#' form <- formula(~ log(gene_n_nonzero) + log(gene_n_umis))
+#' form <- formula(~log(gene_n_umis) + log(gene_n_nonzero) + phase + batch)
 #' response_modality_name <- "gene"
 #' grna_modality_name <- "grna_assignment"
 #' grna_group_column_name <- "target"
-#' B <- 250000
+#' B <- 2500000
 #' side <- "both"
 #' output_amount <- 1
 #' max_b_per_batch <- 250000

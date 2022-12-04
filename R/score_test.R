@@ -1,7 +1,7 @@
 #' Run GLM permutation score test
 #'
 #' @param fit a fitted GLM object
-#' @param index_mat a k-by-B matrix of indexes; the indices should be 1-based
+#' @param index_mat a k-by-B matrix of indexes; the indices should be 0-based
 #'
 #' @return a vector of p-values
 #' @examples
@@ -18,7 +18,7 @@
 #' y <- sapply(mus, function(curr_mu) MASS::rnegbin(n = 1, mu = curr_mu, theta = theta))
 #' fit <- glm(y ~ Z + 0, family = MASS::neg.bin(theta))
 #' index_mat <- replicate(n = B,
-#' expr = sample.int(n = length(y), size = 250))
+#' expr = sample.int(n = length(y), size = 250)) - 1L
 #' z_scores <- run_glm_perm_score_test(fit, index_mat)
 #' hist(z_scores, freq = FALSE, ylim  = c(0, dnorm(0)))
 #' xgrid <- seq(-4, 4, 0.01)
@@ -29,7 +29,7 @@ run_glm_perm_score_test <- function(fit, index_mat) {
   Z <- fit$model[,-1]
   working_resid <- as.numeric(fit$residuals)
   w <- as.numeric(fit$weights)
-  run_glm_perm_score_test_with_ingredients(Z, working_resid, w, index_mat - 1L)
+  run_glm_perm_score_test_with_ingredients(Z, working_resid, w, index_mat)
 }
 
 
