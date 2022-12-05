@@ -64,10 +64,13 @@ compute_empirical_p_value <- function(z_star, z_null, side) {
 #'
 #' @return a vector of gene-wise p-values
 compute_empirical_p_value_from_batch_result <- function(grna_wise_result, B, side) {
-  left_tailed_p <- (apply(grna_wise_result, 2, sum) + 1)/B
+  if (is(grna_wise_result, "integer")) {
+    left_tailed_p <- (grna_wise_result + 1)/B
+  } else {
+    left_tailed_p <- (apply(grna_wise_result, 2, sum) + 1)/B
+  }
   switch(side,
          "left" = left_tailed_p,
          "right" = 1 - left_tailed_p,
          "both" = 2 * pmin(left_tailed_p, 1 - left_tailed_p))
-
 }

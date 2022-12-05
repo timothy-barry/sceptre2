@@ -9,7 +9,7 @@ run_glm_perm_score_test(fit, index_mat)
 \arguments{
 \item{fit}{a fitted GLM object}
 
-\item{index_mat}{a k-by-B matrix of indexes; the indices should be 1-based}
+\item{index_mat}{a k-by-B matrix of indexes; the indices should be 0-based}
 }
 \value{
 a vector of p-values
@@ -31,7 +31,7 @@ mus <- exp(lin_pred)
 y <- sapply(mus, function(curr_mu) MASS::rnegbin(n = 1, mu = curr_mu, theta = theta))
 fit <- glm(y ~ Z + 0, family = MASS::neg.bin(theta))
 index_mat <- replicate(n = B,
-expr = sample.int(n = length(y), size = 250))
+expr = sample.int(n = length(y), size = 250)) - 1L
 z_scores <- run_glm_perm_score_test(fit, index_mat)
 hist(z_scores, freq = FALSE, ylim  = c(0, dnorm(0)))
 xgrid <- seq(-4, 4, 0.01)

@@ -34,7 +34,7 @@
 #' response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 #' get_modality("gene") |>
 #' get_feature_ids() |>
-#' sample(5),
+#' sample(100),
 #' grna_group = c("CDKN1A", "ISYNA1"))
 #'
 #' form <- formula(~log(gene_n_umis) + log(gene_n_nonzero) + phase + batch)
@@ -57,7 +57,6 @@
 #'                               grna_group_column_name,
 #'                               B,
 #'                               side,
-#'                               output_amount,
 #'                               max_b_per_batch,
 #'                               in_memory,
 #'                               statistic)
@@ -70,7 +69,6 @@ run_sceptre_low_moi <- function(mm_odm,
                                 grna_group_column_name = "grna_group",
                                 B = 2500,
                                 side = "both",
-                                output_amount = 1,
                                 max_b_per_batch = 250000,
                                 in_memory = TRUE,
                                 statistic = "full") {
@@ -79,7 +77,6 @@ run_sceptre_low_moi <- function(mm_odm,
 
   # step 1: check inputs; get the unique responses
   cat("Checking inputs. ")
-  if (!output_amount %in% c(1, 2, 3)) stop("output_amount not recognized.")
   mm_odm <- check_ondisc_inputs(mm_odm = mm_odm,
                                 response_grna_group_pairs = response_grna_group_pairs,
                                 form = form,
@@ -102,7 +99,6 @@ run_sceptre_low_moi <- function(mm_odm,
                                                     grna_group_info = grna_group_info,
                                                     response_grna_group_pairs = response_grna_group_pairs,
                                                     B = B,
-                                                    output_amount = output_amount,
                                                     side = side,
                                                     max_b_per_batch = max_b_per_batch,
                                                     in_memory = in_memory,

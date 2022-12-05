@@ -1,7 +1,12 @@
 ##########################
 # Loop over random indices
 ##########################
-perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, output_amount, side, max_b_per_batch, in_memory, statistic) {
+perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, side, max_b_per_batch, in_memory, statistic) {
+  side <- "both"
+  screen_b <- 25000
+  lower_thresh <- 25000 * 0.005
+  upper_thresh <- 0.995 * 25000 + 1
+
   # obtain response odm
   response_odm <- mm_odm |> ondisc::get_modality("response")
 
@@ -34,7 +39,7 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
     global_cell_covariates <- global_cell_covariates[curr_idxs,]
   }
 
-  print("Running gene precomputations.")
+  cat("Running gene precomputations.\n")
   # loop over the response ids, running the precomputation and saving the results
   gene_precomp_list <- lapply(X = response_ids, FUN = function(response_id) {
     cat(paste0("Working on gene ", response_id, ".\n"))
@@ -62,69 +67,127 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
     n_cells_curr_grna_group <- grna_group_info[["n_cells_per_grna"]][[grna_group]]
     subset_vect <- c(grna_group_info[["grna_specific_idxs"]][[grna_group]],
                      grna_group_info[["grna_specific_idxs"]][["non-targeting"]])
+    curr_global_cell_covariates <- global_cell_covariates[subset_vect,]
+    ground_truth_treatment_idxs <- seq(0, n_cells_curr_grna_group - 1L)
 
     # get the response IDs for this gRNA
     response_ids <- response_grna_group_pairs |>
       dplyr::filter(grna_group == !!grna_group) |>
       dplyr::pull(response_id) |> as.character()
     response_ids <- response_ids |> setNames(response_ids)
-
     set.seed(4)
-    # within gRNA, loop over batches
-    grna_wise_result <- lapply(seq_along(batch_bs), function(i) {
-      curr_B <- batch_bs[i]
-      cat(paste0("\tWorking on batch ", i, " of ", length(batch_bs), "\n"))
-      curr_synthetic_treatment_idxs <- get_grna_permutation_idxs(grna_group_info[["n_cells_per_grna"]], grna_group, curr_B) - 1L
-      # loop over the response IDs
-      sapply(X = response_ids, FUN = function(response_id) {
-        cat(paste0("\t\tWorking on gene ", response_id, "\n"))
-        # for the given response id, load the expressions
-        if (in_memory) {
-          expressions <- gene_exp_mat[response_id, subset_vect]
-        } else {
-          expressions <- as.numeric(response_odm[[response_id, subset_vect]])
-        }
-        # next, appropriately subset the global cell covariates
-        curr_global_cell_covariates <- global_cell_covariates[subset_vect,]
 
-        # compute the fitted values of the regression
-        pieces <- get_pieces_from_response_precomp(response_precomp = gene_precomp_list[[response_id]]$precomp,
-                                                   global_cell_covariates = curr_global_cell_covariates)
-        response_theta <- pieces$response_theta
-        mu_hats <- pieces$mu_hats
+    p_aggregate <- numeric()
+    # run the initial screen
+    cat("Running the initial screen.\n")
+    if (B >= screen_b) {
+      screen_res <- perform_association_tests_for_grna(batch_size = screen_b,
+                                                       grna_group_info = grna_group_info,
+                                                       grna_group = grna_group,
+                                                       response_ids = response_ids,
+                                                       in_memory = in_memory,
+                                                       gene_exp_mat = gene_exp_mat,
+                                                       response_odm = response_odm,
+                                                       subset_vect = subset_vect,
+                                                       curr_global_cell_covariates = curr_global_cell_covariates,
+                                                       gene_precomp_list = gene_precomp_list,
+                                                       ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                                       statistic = statistic)
+      promising_genes_v <- screen_res <= lower_thresh | screen_res >= upper_thresh
 
-        # obtain vectors to pass to permutation test
-        ground_truth_treatment_idxs <- seq(0, n_cells_curr_grna_group - 1L)
+      # compute p-values for the filtered genes (if there are any)
+      filtered_gene_counts <- screen_res[!promising_genes_v]
+      if (length(filtered_gene_counts) >= 1) {
+        p_screened <- compute_empirical_p_value_from_batch_result(grna_wise_result = filtered_gene_counts,
+                                                                  B = screen_b, side = side)
+        p_aggregate <- c(p_aggregate, p_screened)
+      }
 
-        # call the low-level association test function
-        if (statistic == "distilled") {
-          perm_runs <- run_permutations_v2(expressions = expressions,
-                                           mu_hats = mu_hats,
-                                           ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                           synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
-                                           response_theta = response_theta)
-        } else if (statistic == "full") {
-          perm_runs <- run_permutations_v3(expressions = expressions,
-                                           mu_hats = mu_hats,
-                                           ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                           synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
-                                           response_theta = response_theta,
-                                           Z = curr_global_cell_covariates)
-        } else {
-          stop("Statistic not recognized.")
-        }
-        # return the left sum
-        left_sum <- sum(perm_runs$z_null <= perm_runs$z_star)
-        left_sum
-      }) |> matrix(nrow = 1) |> as.data.frame()
-    }) |> data.table::rbindlist()
-    colnames(grna_wise_result) <- response_ids
-    p_vals <- compute_empirical_p_value_from_batch_result(grna_wise_result = grna_wise_result,
-                                                          B = B, side = side)
-    gc()
-    data.frame(p_value = p_vals |> stats::setNames(NULL),
+      # update response_ids to include promising genes only
+      promising_genes <- names(which(promising_genes_v))
+      response_ids <- promising_genes
+    }
+
+    # loop over batches for promising genes
+    if (length(response_ids) >= 1) {
+      cat("\tPerforming additional permutations for promising genes.\n")
+      grna_wise_result_promising <- lapply(seq_along(batch_bs), function(i) {
+        cat(paste0("\tWorking on batch ", i, " of ", length(batch_bs), "\n"))
+        curr_B <- batch_bs[i]
+        out <- perform_association_tests_for_grna(batch_size = curr_B,
+                                                  grna_group_info = grna_group_info,
+                                                  grna_group = grna_group,
+                                                  response_ids = response_ids,
+                                                  in_memory = in_memory,
+                                                  gene_exp_mat = gene_exp_mat,
+                                                  response_odm = response_odm,
+                                                  subset_vect = subset_vect,
+                                                  curr_global_cell_covariates = curr_global_cell_covariates,
+                                                  gene_precomp_list = gene_precomp_list,
+                                                  ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                                  statistic = statistic) |>
+          matrix(nrow = 1) |> as.data.frame()
+      }) |> data.table::rbindlist()
+      colnames(grna_wise_result_promising) <- response_ids
+      p_promising <- compute_empirical_p_value_from_batch_result(grna_wise_result = grna_wise_result_promising,
+                                                                 B = B, side = side)
+      p_aggregate <- c(p_aggregate, p_promising)
+    }
+
+    # output results in df
+    data.frame(p_value = p_aggregate |> stats::setNames(NULL),
                grna_group = factor(grna_group),
-               response_id = response_ids |> stats::setNames(NULL) |> factor())
+               response_id = names(p_aggregate) |> factor())
   }) |> data.table::rbindlist()
   return(res)
+}
+
+
+perform_association_tests_for_grna <- function(batch_size,
+                                               grna_group_info,
+                                               grna_group,
+                                               response_ids,
+                                               in_memory,
+                                               gene_exp_mat,
+                                               response_odm,
+                                               subset_vect,
+                                               curr_global_cell_covariates,
+                                               gene_precomp_list,
+                                               ground_truth_treatment_idxs,
+                                               statistic) {
+  curr_synthetic_treatment_idxs <- get_grna_permutation_idxs(grna_group_info[["n_cells_per_grna"]], grna_group, batch_size) - 1L
+  # loop over the response IDs
+  out <- sapply(X = response_ids, FUN = function(response_id) {
+    cat(paste0("\t\tWorking on gene ", response_id, "\n"))
+
+    # for the given response id, load the expressions
+    expressions <- if (in_memory) gene_exp_mat[response_id, subset_vect] else  as.numeric(response_odm[[response_id, subset_vect]])
+
+    # compute the fitted values of the regression
+    pieces <- get_pieces_from_response_precomp(response_precomp = gene_precomp_list[[response_id]]$precomp,
+                                               global_cell_covariates = curr_global_cell_covariates)
+    response_theta <- pieces$response_theta
+    mu_hats <- pieces$mu_hats
+
+    # call the low-level association test function
+    if (statistic == "distilled") {
+      perm_runs <- run_permutations_v2(expressions = expressions,
+                                       mu_hats = mu_hats,
+                                       ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                       synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
+                                       response_theta = response_theta)
+    } else if (statistic == "full") {
+      perm_runs <- run_permutations_v3(expressions = expressions,
+                                       mu_hats = mu_hats,
+                                       ground_truth_treatment_idxs = ground_truth_treatment_idxs,
+                                       synthetic_treatment_idxs = curr_synthetic_treatment_idxs,
+                                       response_theta = response_theta,
+                                       Z = curr_global_cell_covariates)
+    } else {
+      stop("Statistic not recognized.")
+    }
+    # return the left sum
+    left_sum <- sum(perm_runs$z_null <= perm_runs$z_star)
+    return(left_sum)
+  })
 }
