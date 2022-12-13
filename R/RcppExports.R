@@ -9,3 +9,7 @@ low_level_score_test_vectorized <- function(a, B, w, index_mat) {
     .Call(`_sceptre2_low_level_score_test_vectorized`, a, B, w, index_mat)
 }
 
+low_level_permutation_test <- function(y, index_mat) {
+    .Call(`_sceptre2_low_level_permutation_test`, y, index_mat)
+}
+

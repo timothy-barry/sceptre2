@@ -37,10 +37,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// low_level_permutation_test
+NumericVector low_level_permutation_test(NumericVector y, IntegerMatrix index_mat);
+RcppExport SEXP _sceptre2_low_level_permutation_test(SEXP ySEXP, SEXP index_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type index_mat(index_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(low_level_permutation_test(y, index_mat));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_sceptre2_compute_resampled_statistics", (DL_FUNC) &_sceptre2_compute_resampled_statistics, 3},
     {"_sceptre2_low_level_score_test_vectorized", (DL_FUNC) &_sceptre2_low_level_score_test_vectorized, 4},
+    {"_sceptre2_low_level_permutation_test", (DL_FUNC) &_sceptre2_low_level_permutation_test, 2},
     {NULL, NULL, 0}
 };
 
