@@ -15,7 +15,9 @@ run_sceptre_low_moi(
   side = "both",
   max_b_per_batch = 250000,
   in_memory = TRUE,
-  statistic = "full"
+  statistic = "full",
+  return_dist = FALSE,
+  screen_b = 25000
 )
 }
 \arguments{
@@ -34,6 +36,10 @@ run_sceptre_low_moi(
 \item{B}{number of resamples to draw for permutation/conditional randomization test}
 
 \item{side}{sidedness of the test (one of "left", "both", and "right")}
+
+\item{return_dist}{return the resampling distribution (TRUE) or not (FALSE)? If \code{return_dist} is set to TRUE, no initial screen is performed.}
+
+\item{screen_b}{perform an initial screen using this many resamples; if \code{B} < \code{screen_b} (i.e., the total number of resamples requested is less than the number of resamples in the screen), then the screen is not performed.}
 
 \item{output_amount}{return the full output (2) or a simplified, reduced output (1)?}
 }
@@ -62,19 +68,21 @@ mm_odm <- ondisc::read_multimodal_odm(odm_fps = odm_fps, multimodal_metadata_fp 
 response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 get_modality("gene") |>
 get_feature_ids() |>
-sample(100),
+sample(10),
 grna_group = c("CDKN1A", "ISYNA1"))
 
 form <- formula(~log(gene_n_umis) + log(gene_n_nonzero) + phase + batch)
 response_modality_name <- "gene"
 grna_modality_name <- "grna_assignment"
 grna_group_column_name <- "target"
-B <- 2500000
+B <- 10000
 side <- "both"
 output_amount <- 1
-max_b_per_batch <- 250000
+max_b_per_batch <- 5000
 in_memory <- TRUE
 statistic <- "full"
+return_dist <- FALSE
+screen_b <- 25000
 
 # call the function
 result <- run_sceptre_low_moi(mm_odm,
@@ -87,6 +95,8 @@ result <- run_sceptre_low_moi(mm_odm,
                               side,
                               max_b_per_batch,
                               in_memory,
-                              statistic)
+                              statistic,
+                              return_dist,
+                              screen_b)
 }
 }

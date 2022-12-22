@@ -1,11 +1,10 @@
 ##########################
 # Loop over random indices
 ##########################
-perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, side, max_b_per_batch, in_memory, statistic) {
+perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, response_grna_group_pairs, B, side, max_b_per_batch, in_memory, statistic, return_dist, screen_b) {
   side <- "both"
-  screen_b <- 25000
-  lower_thresh <- 25000 * 0.005
-  upper_thresh <- 0.995 * 25000 + 1
+  lower_thresh <- screen_b * 0.005
+  upper_thresh <- 0.995 * screen_b + 1
 
   # obtain response odm
   response_odm <- mm_odm |> ondisc::get_modality("response")
@@ -79,8 +78,9 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
 
     p_aggregate <- numeric()
     # run the initial screen
-    cat("Running the initial screen.\n")
-    if (B >= screen_b) {
+    run_screen <- B >= screen_b && !return_dist
+    if (run_screen) { # only if B exceeds screen b AND we do not want to return the null distributions
+      cat("Running the initial screen.\n")
       screen_res <- perform_association_tests_for_grna(batch_size = screen_b,
                                                        grna_group_info = grna_group_info,
                                                        grna_group = grna_group,
@@ -92,7 +92,8 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
                                                        curr_global_cell_covariates = curr_global_cell_covariates,
                                                        gene_precomp_list = gene_precomp_list,
                                                        ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                                       statistic = statistic)
+                                                       statistic = statistic,
+                                                       return_dist = return_dist)
       promising_genes_v <- screen_res <= lower_thresh | screen_res >= upper_thresh
 
       # compute p-values for the filtered genes (if there are any)
@@ -110,7 +111,11 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
 
     # loop over batches for promising genes
     if (length(response_ids) >= 1) {
-      cat("\tPerforming additional permutations for promising genes.\n")
+      if (run_screen) {
+        cat("\tPerforming additional permutations for promising genes.\n")
+      } else {
+        cat("\tTesting pairs.\n")
+      }
       grna_wise_result_promising <- lapply(seq_along(batch_bs), function(i) {
         cat(paste0("\tWorking on batch ", i, " of ", length(batch_bs), "\n"))
         curr_B <- batch_bs[i]
@@ -125,19 +130,30 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
                                                   curr_global_cell_covariates = curr_global_cell_covariates,
                                                   gene_precomp_list = gene_precomp_list,
                                                   ground_truth_treatment_idxs = ground_truth_treatment_idxs,
-                                                  statistic = statistic) |>
-          matrix(nrow = 1) |> as.data.frame()
+                                                  statistic = statistic,
+                                                  return_dist = return_dist) |>
+          matrix(ncol = length(response_ids)) |> as.data.frame()
       }) |> data.table::rbindlist()
-      colnames(grna_wise_result_promising) <- response_ids
-      p_promising <- compute_empirical_p_value_from_batch_result(grna_wise_result = grna_wise_result_promising,
-                                                                 B = B, side = side)
-      p_aggregate <- c(p_aggregate, p_promising)
+      if (!return_dist) {
+        colnames(grna_wise_result_promising) <- response_ids
+        p_promising <- compute_empirical_p_value_from_batch_result(grna_wise_result = grna_wise_result_promising, B = B, side = side)
+        p_aggregate <- c(p_aggregate, p_promising)
+      }
     }
 
     # output results in df
-    data.frame(p_value = p_aggregate |> stats::setNames(NULL),
-               grna_group = factor(grna_group),
-               response_id = names(p_aggregate) |> factor())
+    if (!return_dist) {
+      out <- data.frame(p_value = p_aggregate |> stats::setNames(NULL),
+                        grna_group = factor(grna_group),
+                        response_id = names(p_aggregate) |> factor())
+    } else {
+      grna_wise_result_promising <- data.table::as.data.table(t(grna_wise_result_promising))
+      colnames(grna_wise_result_promising) <- paste0("z_", seq(1, ncol(grna_wise_result_promising)))
+      grna_wise_result_promising$response_id <- factor(response_ids)
+      grna_wise_result_promising$grna_group <- factor(grna_group)
+      out <- grna_wise_result_promising
+    }
+    out
   }) |> data.table::rbindlist()
   return(res)
 }
@@ -154,7 +170,8 @@ perform_association_tests_for_grna <- function(batch_size,
                                                curr_global_cell_covariates,
                                                gene_precomp_list,
                                                ground_truth_treatment_idxs,
-                                               statistic) {
+                                               statistic,
+                                               return_dist) {
   curr_synthetic_treatment_idxs <- get_grna_permutation_idxs(grna_group_info[["n_cells_per_grna"]], grna_group, batch_size) - 1L
   # loop over the response IDs
   out <- sapply(X = response_ids, FUN = function(response_id) {
@@ -187,7 +204,11 @@ perform_association_tests_for_grna <- function(batch_size,
       stop("Statistic not recognized.")
     }
     # return the left sum
-    left_sum <- sum(perm_runs$z_null <= perm_runs$z_star)
-    return(left_sum)
+    if (!return_dist) {
+      out <- sum(perm_runs$z_null <= perm_runs$z_star)
+    } else {
+      out <- perm_runs$z_null
+    }
+    return(out)
   })
 }

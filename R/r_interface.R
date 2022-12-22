@@ -11,6 +11,8 @@
 #' @param grna_group_column_name name of the column within the feature covariate matrix of the gRNA ODM that contains the gRNA groups
 #' @param side sidedness of the test (one of "left", "both", and "right")
 #' @param output_amount return the full output (2) or a simplified, reduced output (1)?
+#' @param return_dist return the resampling distribution (TRUE) or not (FALSE)? If `return_dist` is set to TRUE, no initial screen is performed.
+#' @param screen_b perform an initial screen using this many resamples; if `B` < `screen_b` (i.e., the total number of resamples requested is less than the number of resamples in the screen), then the screen is not performed.
 #'
 #' @return a data frame with columns `response_id`, `grna_group`, `p_value`, and `log_fold_change`.
 #' @export
@@ -34,19 +36,21 @@
 #' response_grna_group_pairs <- expand.grid(response_id = mm_odm |>
 #' get_modality("gene") |>
 #' get_feature_ids() |>
-#' sample(100),
+#' sample(10),
 #' grna_group = c("CDKN1A", "ISYNA1"))
 #'
 #' form <- formula(~log(gene_n_umis) + log(gene_n_nonzero) + phase + batch)
 #' response_modality_name <- "gene"
 #' grna_modality_name <- "grna_assignment"
 #' grna_group_column_name <- "target"
-#' B <- 2500000
+#' B <- 10000
 #' side <- "both"
 #' output_amount <- 1
-#' max_b_per_batch <- 250000
+#' max_b_per_batch <- 5000
 #' in_memory <- TRUE
 #' statistic <- "full"
+#' return_dist <- FALSE
+#' screen_b <- 25000
 #'
 #' # call the function
 #' result <- run_sceptre_low_moi(mm_odm,
@@ -59,7 +63,9 @@
 #'                               side,
 #'                               max_b_per_batch,
 #'                               in_memory,
-#'                               statistic)
+#'                               statistic,
+#'                               return_dist,
+#'                               screen_b)
 #' }
 run_sceptre_low_moi <- function(mm_odm,
                                 response_grna_group_pairs,
@@ -71,7 +77,9 @@ run_sceptre_low_moi <- function(mm_odm,
                                 side = "both",
                                 max_b_per_batch = 250000,
                                 in_memory = TRUE,
-                                statistic = "full") {
+                                statistic = "full",
+                                return_dist = FALSE,
+                                screen_b = 25000) {
   # DELETE AFTER REWRITING ASSIGN GRNA FUNCT
   grna_odm <- mm_odm |> ondisc::get_modality(grna_modality_name)
 
@@ -102,6 +110,8 @@ run_sceptre_low_moi <- function(mm_odm,
                                                     side = side,
                                                     max_b_per_batch = max_b_per_batch,
                                                     in_memory = in_memory,
-                                                    statistic = statistic)
+                                                    statistic = statistic,
+                                                    return_dist = return_dist,
+                                                    screen_b = screen_b)
   return(results)
 }
