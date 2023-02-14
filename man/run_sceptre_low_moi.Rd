@@ -11,7 +11,7 @@ run_sceptre_low_moi(
   response_modality_name = "gene",
   grna_modality_name = "grna",
   grna_group_column_name = "grna_group",
-  B = 2500,
+  B = 250000,
   side = "both",
   max_b_per_batch = 250000,
   in_memory = TRUE,
@@ -75,10 +75,9 @@ form <- formula(~log(gene_n_umis) + log(gene_n_nonzero) + phase + batch)
 response_modality_name <- "gene"
 grna_modality_name <- "grna_assignment"
 grna_group_column_name <- "target"
-B <- 10000
+B <- 2500000
 side <- "both"
-output_amount <- 1
-max_b_per_batch <- 5000
+max_b_per_batch <- 250000
 in_memory <- TRUE
 statistic <- "full"
 return_dist <- FALSE

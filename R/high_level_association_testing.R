@@ -148,7 +148,7 @@ perform_association_test_lowmoi_odm_v3 <- function(mm_odm, grna_group_info, resp
                         response_id = names(p_aggregate) |> factor())
     } else {
       grna_wise_result_promising <- data.table::as.data.table(t(grna_wise_result_promising))
-      colnames(grna_wise_result_promising) <- paste0("z_", seq(1, ncol(grna_wise_result_promising)))
+      colnames(grna_wise_result_promising) <- c("z_star", paste0("z_", seq(1, B)))
       grna_wise_result_promising$response_id <- factor(response_ids)
       grna_wise_result_promising$grna_group <- factor(grna_group)
       out <- grna_wise_result_promising
@@ -207,7 +207,7 @@ perform_association_tests_for_grna <- function(batch_size,
     if (!return_dist) {
       out <- sum(perm_runs$z_null <= perm_runs$z_star)
     } else {
-      out <- perm_runs$z_null
+      out <- c(perm_runs$z_star, perm_runs$z_null)
     }
     return(out)
   })
