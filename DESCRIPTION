@@ -15,7 +15,6 @@ Imports:
     data.table,
     dplyr,
     ggplot2,
-    lowmoi,
     MASS,
     ondisc,
     sn,

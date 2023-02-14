@@ -74,3 +74,71 @@ compute_empirical_p_value_from_batch_result <- function(grna_wise_result, B, sid
          "right" = 1 - left_tailed_p,
          "both" = 2 * pmin(left_tailed_p, 1 - left_tailed_p))
 }
+
+
+#' Get target assignments via max operation
+#'
+#' @param grna_odm a grna ODM
+#'
+#' @return a vector of "targets" obtained by applying a column-wise max operation to the grna ODM;
+#' the target is present as a column of the feature covariate matrix of the grna ODM.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' grna_odm <- load_dataset_modality("schraivogel/ground_truth_tapseq/grna_assignment")
+#' get_target_assignments_via_max_op(grna_odm)
+#' }
+get_target_assignments_via_max_op <- function(grna_odm) {
+  grna_feature_covariates <- grna_odm |> ondisc::get_feature_covariates()
+  grna_feature_covariates$target[is.na(grna_feature_covariates$target)] <- "candidate"
+  grna_to_target_map <- stats::setNames(row.names(grna_feature_covariates), grna_feature_covariates$target)
+  grna_assignments <- get_grna_assignments_via_max_op(grna_odm)
+  grna_targets <- names(grna_to_target_map)[match(x = grna_assignments, table = grna_to_target_map)]
+  return(grna_targets)
+}
+
+
+#' Get grna assignments via max operation
+#'
+#' @param grna_odm a grna ODM;
+#'
+#' @return a vector of grna IDs obtained by applying a column-wise max operation to the grna ODM.
+get_grna_assignments_via_max_op <- function(grna_odm) {
+  ret <- grna_odm |>
+    load_whole_odm() |>
+    apply(MARGIN = 2, FUN = function(col) names(which.max(col))) |>
+    unname()
+  return(ret)
+}
+
+
+#' Load whole odm
+#'
+#' Loads data from disk into memory by cell.
+#'
+#' @param odm an ondisc_matrix object
+#' @param csc_format load in cell-accessible, CSC format (TRUE) or feature-accessible, CSR format (FALSE)?
+#'
+#' @return an in-memory matrix
+#' @export
+load_whole_odm <- function(odm, csc_format = TRUE) {
+  x <- odm@ondisc_matrix
+  x_dim <- dim(x)
+  index_on_cell <- csc_format
+  subset_vector <- ondisc:::get_subset_vector(x, index_on_cell)
+  if (identical(subset_vector, NA_integer_)) {
+    subset_vector <- seq(1, if (index_on_cell) x_dim[2] else x_dim[1])
+  }
+  out <- ondisc:::return_spMatrix_from_index(x@h5_file, subset_vector,
+                                             index_on_cell, x@logical_mat, x@underlying_dimension)
+  second_subset <- ondisc:::get_subset_vector(x, !index_on_cell)
+  if (!identical(second_subset, NA_integer_)) {
+    out <- if (index_on_cell)
+      out[second_subset, , drop = FALSE]
+    else out[, second_subset, drop = FALSE]
+  }
+  row.names(out) <- ondisc::get_feature_ids(odm)
+  colnames(out) <- ondisc::get_cell_barcodes(odm)
+  return(out)
+}
